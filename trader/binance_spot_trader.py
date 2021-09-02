@@ -18,10 +18,12 @@
 
 from gateway import BinanceSpotHttp, OrderStatus, OrderType, OrderSide
 from utils import config
-from utils import utility, round_to
-from enum import Enum
+from utils import round_to
 import logging
 from datetime import datetime
+from utils.config import top_symbols
+from utils.positions import Positions
+
 
 class BinanceSpotTrader(object):
 
@@ -33,28 +35,33 @@ class BinanceSpotTrader(object):
         """
         self.http_client = BinanceSpotHttp(api_key=config.api_key, secret=config.api_secret, proxy_host=config.proxy_host, proxy_port=config.proxy_port)
 
-        self.buy_orders = []  # 买单.
-        self.sell_orders = [] # 卖单
-        self.symbols = []
-        self.tickers = {}
+        self.symbols_dict = {}  # 全市场的交易对.
+        self.tickers_dict = {}  # 全市场的tickers数据.
+
+        self.buy_orders_dict = {}  # 买单字典 buy orders {'symbol': [], 'symbol1': []}
+        self.sell_orders_dict = {}  # 卖单字典. sell orders  {'symbol': [], 'symbol1': []}
+        self.positions = Positions()
+        self.initial_id = 0
 
     def get_exchange_info(self):
         data = self.http_client.get_exchange_info()
         if isinstance(data, dict):
             items = data.get('symbols', [])
             for item in items:
+
                 if item.get('quoteAsset') == 'USDT' and item.get('status') == "TRADING":
-                    symbol = {"symbol": item['symbol']
-                         }
+
+                    symbol = item['symbol']
+                    symbol_data = {"symbol": symbol}
                     for filter in item['filters']:
                         if filter['filterType'] == 'PRICE_FILTER':
-                            symbol['min_price'] = float(filter['tickSize'])
+                            symbol_data['min_price'] = float(filter['tickSize'])
                         elif filter['filterType'] == 'LOT_SIZE':
-                            symbol['min_qty'] = float(filter['stepSize'])
+                            symbol_data['min_qty'] = float(filter['stepSize'])
                         elif filter['filterType'] == 'MIN_NOTIONAL':
-                            symbol['min_notional'] = float(filter['minNotional'])
+                            symbol_data['min_notional'] = float(filter['minNotional'])
 
-                    self.symbols.append(symbol)
+                    self.symbols_dict[symbol] = symbol_data
 
     def get_all_tickers(self):
 
@@ -63,156 +70,229 @@ class BinanceSpotTrader(object):
             for tick in tickers:
                 symbol = tick['symbol']
                 ticker = {"bid_price": tick['bidPrice'], "ask_price": tick["askPrice"]}
-                self.tickers[symbol] = ticker
+                self.tickers_dict[symbol] = ticker
         else:
-            self.tickers = {}
+            self.tickers_dict = {}
 
+    def get_klines(self, symbol: str, interval, limit):
+        return self.http_client.get_kline(symbol=symbol, interval=interval, limit=limit)
 
     def start(self):
         """
         执行核心逻辑，网格交易的逻辑.
+
+        the grid trading logic
         :return:
         """
 
+        delete_buy_orders = []  # the buy orders need to remove from buy_orders[] list
+        delete_sell_orders = []  # the sell orders need to remove from sell_orders[] list
+
+        # 买单逻辑,检查成交的情况.
+
+        for key in self.buy_orders_dict.keys():
+            for buy_order in self.buy_orders_dict.get(key, []):
+                check_order = self.http_client.get_order(buy_order.get('symbol'),
+                                                         client_order_id=buy_order.get('clientOrderId'))
+
+                if check_order:
+                    if check_order.get('status') == OrderStatus.CANCELED.value:
+                        delete_buy_orders.append(buy_order)
+
+                        print(f"{buy_order.get('symbol')}: buy order was canceled, time: {datetime.now()}")
+
+                    elif check_order.get('status') == OrderStatus.FILLED.value:
+                        delete_buy_orders.append(buy_order)
+                        # 买单成交，挂卖单.
+                        symbol = buy_order.get('symbol')
+                        price = float(check_order.get('price'))
+                        qty = float(check_order.get('origQty'))
+                        min_qty = self.symbols_dict.get(symbol).get('min_qty', 0)
+
+                        self.positions.update(symbol=symbol, trade_price=price, trade_amount=qty, min_qty=min_qty,
+                                              is_buy=True)
+
+                        logging.info(
+                            f"{symbol}: buy order was filled, price: {price}, qty: {qty}, time: {datetime.now()}")
+
+
+                    elif check_order.get('status') == OrderStatus.NEW.value:
+                        print(f"{buy_order.get('symbol')}: buy order is new, time: {datetime.now()}")
+
+                    else:
+                        print(
+                            f"{buy_order.get('symbol')} buy order's status is not in above options, status: {check_order.get('status')}, time: {datetime.now()}")
+
+        # the expired\canceled\delete orders
+        for delete_order in delete_buy_orders:
+            for key in self.buy_orders_dict.keys():
+                orders = self.buy_orders_dict.get(key, [])
+                if delete_order in orders:
+                    orders.remove(delete_order)
+
+        # 卖单逻辑, 检查卖单成交情况.
+        for key in self.sell_orders_dict.keys():
+            for sell_order in self.sell_orders_dict.get(key, []):
+                check_order = self.http_client.get_order(sell_order.get('symbol'),
+                                                         client_order_id=sell_order.get('clientOrderId'))
+                if check_order:
+                    if check_order.get('status') == OrderStatus.CANCELED.value:
+                        delete_sell_orders.append(sell_order)
+
+                        print(f"{sell_order.get('symbol')}: sell order was canceled, time: {datetime.now()}")
+                    elif check_order.get('status') == OrderStatus.FILLED.value:
+                        delete_sell_orders.append(sell_order)
+
+                        symbol = check_order.get('symbol')
+                        price = float(check_order.get('price'))
+                        qty = float(check_order.get('origQty'))
+
+                        min_qty = self.symbols_dict.get(symbol).get('min_qty', 0)
+                        self.positions.update(symbol=symbol, trade_price=price, trade_amount=qty, min_qty=min_qty,
+                                              is_buy=False)
+
+                        logging.info(
+                            f"{symbol}: sell order was filled, price: {price}, qty: {qty}, total_profit: {self.positions.total_profit}, time: {datetime.now()}")
+
+
+                    elif check_order.get('status') == OrderStatus.NEW.value:
+                        print(f"sell order status is: New, 时间: {datetime.now()}")
+                    else:
+                        print(
+                            f"sell order status is not in above options: {check_order.get('status')}, 时间: {datetime.now()}")
+
+        # the expired\canceled\delete orders
+        for delete_order in delete_buy_orders:
+            for key in self.sell_orders_dict.keys():
+                orders = self.sell_orders_dict.get(key, [])
+                if delete_order in orders:
+                    orders.remove(delete_order)
+
+        ####################################
+        """
+        check about the current position and order status.
+        """
+
         self.get_all_tickers()
-        print(self.tickers)
+        if len(self.tickers_dict.keys()) == 0:
+            return
 
-        return
+        symbols = self.positions.positions.keys()
 
-        # print(f"bid_price: {bid_price}, ask_price: {ask_price}")
-        #
-        # quantity = round_to(float(config.quantity), float(config.min_qty))
-        #
-        # self.buy_orders.sort(key=lambda x: float(x['price']), reverse=True)  # 最高价到最低价.
-        # self.sell_orders.sort(key=lambda x: float(x['price']), reverse=True)  # 最高价到最低价.
-        # print(f"buy orders: {self.buy_orders}")
-        # print("------------------------------")
-        # print(f"sell orders: {self.sell_orders}")
-        #
-        # buy_delete_orders = []  # 需要删除买单
-        # sell_delete_orders = [] # 需要删除的卖单
-        #
-        #
-        # # 买单逻辑,检查成交的情况.
-        # for buy_order in self.buy_orders:
-        #
-        #     check_order = self.http_client.get_order(buy_order.get('symbol', config.symbol),client_order_id=buy_order.get('clientOrderId'))
-        #
-        #     if check_order:
-        #         if check_order.get('status') == OrderStatus.CANCELED.value:
-        #             buy_delete_orders.append(buy_order)
-        #             print(f"buy order status was canceled: {check_order.get('status')}")
-        #         elif check_order.get('status') == OrderStatus.FILLED.value:
-        #             # 买单成交，挂卖单.
-        #             logging.info(f"买单成交时间: {datetime.now()}, 价格: {check_order.get('price')}, 数量: {check_order.get('origQty')}")
-        #
-        #
-        #             sell_price = round_to(float(check_order.get("price")) * (1 + float(config.gap_percent)), float(config.min_price))
-        #
-        #             if 0 < sell_price < ask_price:
-        #                 # 防止价格
-        #                 sell_price = round_to(ask_price, float(config.min_price))
-        #
-        #             new_sell_order = self.http_client.place_order(symbol=config.symbol, order_side=OrderSide.SELL, order_type=OrderType.LIMIT, quantity=quantity, price=sell_price)
-        #             if new_sell_order:
-        #                 buy_delete_orders.append(buy_order)
-        #                 self.sell_orders.append(new_sell_order)
-        #
-        #             buy_price = round_to(float(check_order.get("price")) * (1 - float(config.gap_percent)),
-        #                              config.min_price)
-        #             if buy_price > bid_price > 0:
-        #                 buy_price = round_to(bid_price, float(config.min_price))
-        #
-        #             new_buy_order = self.http_client.place_order(symbol=config.symbol, order_side=OrderSide.BUY, order_type=OrderType.LIMIT, quantity=quantity, price=buy_price)
-        #             if new_buy_order:
-        #                 self.buy_orders.append(new_buy_order)
-        #
-        #
-        #         elif check_order.get('status') == OrderStatus.NEW.value:
-        #             print("buy order status is: New")
-        #         else:
-        #             print(f"buy order status is not above options: {check_order.get('status')}")
-        #
-        # # 过期或者拒绝的订单删除掉.
-        # for delete_order in buy_delete_orders:
-        #     self.buy_orders.remove(delete_order)
-        #
-        # # 卖单逻辑, 检查卖单成交情况.
-        # for sell_order in self.sell_orders:
-        #
-        #     check_order = self.http_client.get_order(sell_order.get('symbol', config.symbol),
-        #                                        client_order_id=sell_order.get('clientOrderId'))
-        #     if check_order:
-        #         if check_order.get('status') == OrderStatus.CANCELED.value:
-        #             sell_delete_orders.append(sell_order)
-        #
-        #             print(f"sell order status was canceled: {check_order.get('status')}")
-        #         elif check_order.get('status') == OrderStatus.FILLED.value:
-        #             logging.info(
-        #                 f"卖单成交时间: {datetime.now()}, 价格: {check_order.get('price')}, 数量: {check_order.get('origQty')}")
-        #             # 卖单成交，先下买单.
-        #             buy_price = round_to(float(check_order.get("price")) * (1 - float(config.gap_percent)), float(config.min_price))
-        #             if buy_price > bid_price > 0:
-        #                 buy_price = round_to(bid_price, float(config.min_price))
-        #
-        #             new_buy_order = self.http_client.place_order(symbol=config.symbol, order_side=OrderSide.BUY,
-        #                                                      order_type=OrderType.LIMIT, quantity=quantity, price=buy_price)
-        #             if new_buy_order:
-        #                 sell_delete_orders.append(sell_order)
-        #                 self.buy_orders.append(new_buy_order)
-        #
-        #             sell_price = round_to(float(check_order.get("price")) * (1 + float(config.gap_percent)), float(config.min_price))
-        #
-        #             if 0 < sell_price < ask_price:
-        #                 # 防止价格
-        #                 sell_price = round_to(ask_price, float(config.min_price))
-        #
-        #             new_sell_order = self.http_client.place_order(symbol=config.symbol, order_side=OrderSide.SELL,
-        #                                                          order_type=OrderType.LIMIT, quantity=quantity,
-        #                                                          price=sell_price)
-        #             if new_sell_order:
-        #                 self.sell_orders.append(new_sell_order)
-        #
-        #         elif check_order.get('status') == OrderStatus.NEW.value:
-        #             print("sell order status is: New")
-        #         else:
-        #             print(f"sell order status is not in above options: {check_order.get('status')}")
-        #
-        # # 过期或者拒绝的订单删除掉.
-        # for delete_order in sell_delete_orders:
-        #     self.sell_orders.remove(delete_order)
-        #
-        # # 没有买单的时候.
-        # if len(self.buy_orders) <= 0:
-        #     if bid_price > 0:
-        #         price = round_to(bid_price * (1 - float(config.gap_percent)), float(config.min_price))
-        #         buy_order = self.http_client.place_order(symbol=config.symbol,order_side=OrderSide.BUY, order_type=OrderType.LIMIT, quantity=quantity,price=price)
-        #         if buy_order:
-        #             self.buy_orders.append(buy_order)
-        #
-        # elif len(self.buy_orders) > int(config.max_orders): # 最多允许的挂单数量.
-        #     # 订单数量比较多的时候.
-        #     self.buy_orders.sort(key=lambda x: float(x['price']), reverse=False)  # 最低价到最高价
-        #
-        #     delete_order = self.buy_orders[0]
-        #     order = self.http_client.cancel_order(delete_order.get('symbol'), client_order_id=delete_order.get('clientOrderId'))
-        #     if order:
-        #         self.buy_orders.remove(delete_order)
-        #
-        # # 没有卖单的时候.
-        # if len(self.sell_orders) <= 0:
-        #     if ask_price > 0:
-        #         price = round_to(ask_price * (1 + float(config.gap_percent)), float(config.min_price))
-        #         order = self.http_client.place_order(symbol=config.symbol,order_side=OrderSide.SELL, order_type=OrderType.LIMIT, quantity=quantity,price=price)
-        #         if order:
-        #             self.sell_orders.append(order)
-        #
-        # elif len(self.sell_orders) > int(config.max_orders): # 最多允许的挂单数量.
-        #     # 订单数量比较多的时候.
-        #     self.sell_orders.sort(key=lambda x: x['price'], reverse=True)  # 最高价到最低价
-        #
-        #     delete_order = self.sell_orders[0]
-        #     order = self.http_client.cancel_order(delete_order.get('symbol'),
-        #                                           client_order_id=delete_order.get('clientOrderId'))
-        #     if order:
-        #         self.sell_orders.remove(delete_order)
+        for s in symbols:
+            pos_data = self.positions.positions.get(s)
+            pos = pos_data.get('pos')
+            bid_price = self.tickers_dict.get(s, {}).get('bid_price', 0)  # bid price
+            ask_price = self.tickers_dict.get(s, {}).get('ask_price', 0)  # ask price
+
+            min_qty = self.symbols_dict.get(s, {}).get('min_qty')
+
+            if bid_price > 0 and ask_price > 0:
+                value = pos * bid_price
+                if value < self.symbols_dict.get(s, {}).get('min_notional', 0):
+                    print(f"{s} 的仓位价值小于最小的仓位价值, 所以删除了该交易对的仓位.")
+                    del self.positions.positions[s]  # 删除仓位价值比较小的交易对.
+                else:
+                    avg_price = pos_data.get('avg_price')
+                    self.positions.update_profit_max_price(s, bid_price)
+                    # 计算利润.
+                    profit_pct = bid_price / avg_price - 1
+                    pull_back_pct = self.positions.positions.get(s, {}).get('profit_max_price', 0) / bid_price - 1
+
+                    dump_pct = self.positions.positions.get(s, {}).get('last_entry_price', 0) / bid_price - 1
+                    current_increase_pos_count = self.positions.positions.get(s, {}).get('current_increase_pos_count',
+                                                                                         1)
+
+                    # 判断是否是有利润，然后考虑出场.
+                    if profit_pct >= config.exit_profit_pct and pull_back_pct >= config.profit_pull_back_pct and len(
+                            self.sell_orders_dict.get(s, [])) <= 0:
+                        """
+                        the position has the profit and pull back meet requirements.
+                        """
+
+                        # cancel the buy orders. when we want to place sell orders, we need to cancel the buy orders.
+                        buy_orders = self.buy_orders_dict.get(s, [])
+                        for buy_order in buy_orders:
+                            print("cancel the buy orders. when we want to place sell orders, we need to cancel the buy orders.")
+                            self.http_client.cancel_order(s, buy_order.get('clientOrderId'))
+                        # 处理价格和精度.
+                        qty = round_to(abs(pos), min_qty)
+
+                        sell_order = self.http_client.place_order(symbol=s, order_side=OrderSide.SELL,
+                                                                  order_type=OrderType.LIMIT, quantity=qty,
+                                                                  price=bid_price)
+
+                        if sell_order:
+                            # resolve sell order
+                            orders = self.sell_orders_dict.get(s, [])
+                            orders.append(sell_order)
+                            self.sell_orders_dict[s] = orders
+
+                    # if the market price continue drop down you can increase your positions.
+
+                    elif dump_pct >= config.increase_pos_when_drop_down and len(self.buy_orders_dict.get(s,
+                                                                                                         [])) <= 0 and current_increase_pos_count <= config.max_increase_pos_count:
+
+                        # cancel the sell orders, when we want to place buy orders, we need to cancel the sell orders.
+                        sell_orders = self.sell_orders_dict.get(s, [])
+                        for sell_order in sell_orders:
+                            print("cancel the sell orders, when we want to place buy orders, we need to cancel the sell orders")
+                            self.http_client.cancel_order(s, sell_order.get('clientOrderId'))
+
+                        buy_value = config.initial_trade_value * config.trade_value_multiplier ** current_increase_pos_count
+
+                        qty = round_to(buy_value / bid_price, min_qty)
+
+                        buy_order = self.http_client.place_order(symbol=s, order_side=OrderSide.BUY,
+                                                                 order_type=OrderType.LIMIT, quantity=qty,
+                                                                 price=bid_price)
+                        if buy_order:
+                            # resolve buy orders
+                            orders = self.buy_orders_dict.get(s, [])
+                            orders.append(buy_order)
+
+                            self.buy_orders_dict[s] = orders
+
+            else:
+                print(f"{s}: bid_price: {bid_price}, ask_price: {bid_price}")
+
+        symbols = self.positions.positions.keys()  # 有仓位的交易对信息.
+        pos_count = len(symbols)  # 仓位的个数.
+
+        left_times = config.max_pairs - pos_count
+
+        if self.initial_id == top_symbols.get('id', self.initial_id):
+            # the id is not updated, indicates that the data is not updated.
+            return
+        else:
+            # there is new data, we need to update the new id too.
+
+            self.initial_id = top_symbols.get('id', self.initial_id)
+
+        if len(top_symbols) > left_times > 0:
+            trade_data = top_symbols[0:left_times]
+
+            for data in trade_data:
+                if data['pct'] >= config.pump_pct:
+                    s = data['symbol']
+                    print(f"{s}  price change is {data['pct']}")
+                    # the last one hour's the symbol jump over some percent.
+
+                    buy_value = config.initial_trade_value
+                    min_qty = self.symbols_dict.get(s, {}).get('min_qty')
+
+                    qty = round_to(buy_value / bid_price, min_qty)
+
+                    buy_order = self.http_client.place_order(symbol=s, order_side=OrderSide.BUY,
+                                                             order_type=OrderType.LIMIT, quantity=qty,
+                                                             price=bid_price)
+
+                    if buy_order:
+                        # resolve buy orders
+                        orders = self.buy_orders_dict.get(s, [])
+                        orders.append(buy_order)
+                        self.buy_orders_dict[s] = orders
+
+
+                else:
+                    pass
