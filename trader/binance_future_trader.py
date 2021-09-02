@@ -218,6 +218,7 @@ class BinanceFutureTrader(object):
                         # cancel the buy orders. when we want to place sell orders, we need to cancel the buy orders.
                         buy_orders = self.buy_orders_dict.get(s, [])
                         for buy_order in buy_orders:
+                            print("cancel the buy orders. when we want to place sell orders, we need to cancel the buy orders.")
                             self.http_client.cancel_order(s, buy_order.get('clientOrderId'))
                         # 处理价格和精度.
                         qty = round_to(abs(pos), min_qty)
@@ -240,6 +241,7 @@ class BinanceFutureTrader(object):
                         # cancel the sell orders, when we want to place buy orders, we need to cancel the sell orders.
                         sell_orders = self.sell_orders_dict.get(s, [])
                         for sell_order in sell_orders:
+                            print("cancel the sell orders, when we want to place buy orders, we need to cancel the sell orders")
                             self.http_client.cancel_order(s, sell_order.get('clientOrderId'))
 
                         buy_value = config.initial_trade_value * config.trade_value_multiplier ** current_increase_pos_count
