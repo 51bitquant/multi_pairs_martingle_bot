@@ -18,8 +18,7 @@
 
 from gateway import BinanceFutureHttp, OrderStatus, OrderType, OrderSide
 from utils import config
-from utils import utility, round_to
-from enum import Enum
+from utils import round_to
 import logging
 from datetime import datetime
 from utils.config import top_symbols
@@ -259,14 +258,15 @@ class BinanceFutureTrader(object):
 
             self.initial_id = top_symbols.get('id', self.initial_id)
 
-        if left_times > 0:
+        if len(top_symbols) > left_times > 0:
             trade_data = top_symbols[0:left_times]
 
             for data in trade_data:
                 if data['pct'] >= config.pump_pct:
-                    print(f"the pct change is over {config.pump_pct}")
-                    # the last one hour's the symbol jump over some percent.
                     s = data['symbol']
+                    print(f"{s}  price change is {data['pct']}")
+                    # the last one hour's the symbol jump over some percent.
+
                     buy_value = config.initial_trade_value
                     min_qty = self.symbols_dict.get(s, {}).get('min_qty')
 

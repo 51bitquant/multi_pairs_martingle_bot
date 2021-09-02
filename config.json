@@ -10,6 +10,6 @@
   "open_pos_from_drop_down": 0.05,
   "exit_profit_pct": 0.01,
   "profit_pull_back_pct": 0.01,
-  "proxy_host": "127.0.0.1",
-  "proxy_port": 1087
+  "proxy_host": "",
+  "proxy_port": 0
 }

@@ -23,7 +23,7 @@ from utils import config
 from apscheduler.schedulers.background import BackgroundScheduler
 
 format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-logging.basicConfig(level=logging.INFO, format=format, filename='grid_trader_log.txt')
+logging.basicConfig(level=logging.INFO, format=format, filename='log.txt')
 logger = logging.getLogger('binance')
 from typing import Union
 from gateway.binance_future import Interval
@@ -40,9 +40,6 @@ def get_data(trader: Union[BinanceFutureTrader, BinanceSpotTrader]):
     symbols = trader.symbols_dict.keys()
 
     datas = []
-    # warning
-    index = 0
-    # end warning
 
     for symbol in symbols:
         klines = trader.get_klines(symbol=symbol, interval=Interval.HOUR_1, limit=100)
@@ -61,12 +58,6 @@ def get_data(trader: Union[BinanceFutureTrader, BinanceSpotTrader]):
 
             value = {'pct': pct[-1], 'symbol': symbol}
             datas.append(value)
-        # warning
-        index += 1
-
-        if index > 5:
-            break
-    # end warning
 
     datas.sort(key=lambda x: x['pct'], reverse=True)
     top_symbols['id'] = top_symbols['id'] + 1
@@ -86,7 +77,7 @@ if __name__ == '__main__':
     get_data(trader)
 
     scheduler = BackgroundScheduler()
-    scheduler.add_job(get_data, trigger='cron', minute='*/10', args=(trader,))
+    scheduler.add_job(get_data, trigger='cron', hour='*/1', args=(trader,))
     scheduler.start()
 
     while True:
@@ -98,6 +89,5 @@ if __name__ == '__main__':
 1. 每四个小时会挑选出前几个波动率最大的交易对(假设交易的是四个交易对).
 2. 然后根据设置的参数进行下单(假设有两个仓位,那么波动率最大的两个，且他们过去一段时间是暴涨过的)
 3. 然后让他们执行马丁策略.
-
 
 """

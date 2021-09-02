@@ -16,7 +16,6 @@
     服务器购买地址: https://www.ucloud.cn/site/global.html?invitation_code=C1x2EA81CD79B8C#dongjing
 """
 
-
 from gateway import BinanceSpotHttp, OrderStatus, OrderType, OrderSide
 from utils import config
 from utils import utility, round_to
