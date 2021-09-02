@@ -247,7 +247,7 @@ class BinanceFutureTrader(object):
                             self.buy_orders_dict[s] = orders
 
             else:
-                print(f"{s}: 交易对的价格为零: {bid_price}")
+                print(f"{s}: bid_price: {bid_price}, ask_price: {bid_price}")
 
         symbols = self.positions.positions.keys()  # 有仓位的交易对信息.
         pos_count = len(symbols)  # 仓位的个数.

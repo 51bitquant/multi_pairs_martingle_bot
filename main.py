@@ -63,6 +63,8 @@ def get_data(trader: Union[BinanceFutureTrader, BinanceSpotTrader]):
     top_symbols['id'] = top_symbols['id'] + 1
     top_symbols['symbols'] = datas
 
+    print(top_symbols)
+
 
 if __name__ == '__main__':
 
@@ -85,8 +87,9 @@ if __name__ == '__main__':
         trader.start()
 
 """
-策略逻辑
-1. 每四个小时会挑选出前几个波动率最大的交易对(假设交易的是四个交易对).
+strategy idea: 
+
+1. 每1个小时会挑选出前几个波动率最大的交易对(假设交易的是四个交易对).
 2. 然后根据设置的参数进行下单(假设有两个仓位,那么波动率最大的两个，且他们过去一段时间是暴涨过的)
 3. 然后让他们执行马丁策略.
 
