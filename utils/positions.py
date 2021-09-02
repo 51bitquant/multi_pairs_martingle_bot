@@ -17,12 +17,13 @@
 
     服务器购买地址: https://www.ucloud.cn/site/global.html?invitation_code=C1x2EA81CD79B8C#dongjing
 """
-
+from utils.config import config
 
 class Positions:
 
     def __init__(self):
         self.positions = {}
+        self.total_profit = 0
 
     def update(self, symbol: str, trade_amount: float, trade_price: float, min_qty: float, is_buy: bool = False):
         """
@@ -46,6 +47,8 @@ class Positions:
             pos['last_entry_price'] = trade_price
 
         else:
+            self.total_profit += (trade_price - pos[
+                'avg_price']) * trade_amount - 2 * trade_amount * trade_price * config.trading_fee
             pos['pos'] = pos['pos'] - trade_amount
 
         if pos['pos'] < min_qty:

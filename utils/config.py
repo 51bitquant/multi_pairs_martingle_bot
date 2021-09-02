@@ -36,9 +36,10 @@ class Config:
         self.open_pos_from_drop_down = 0.05
         self.exit_profit_pct = 0.01  # 出场的利润.
         self.profit_pull_back_pct = 0.01  # 回调百分比.
-
+        self.trading_fee = 0.0004  #
         self.proxy_host = ""  # proxy host
         self.proxy_port = 0  # proxy port
+
 
     def loads(self, config_file=None):
         """ Load config file.

@@ -157,7 +157,7 @@ class BinanceFutureTrader(object):
                                               is_buy=False)
 
                         logging.info(
-                            f"{symbol}: sell order was filled, price: {price}, qty: {qty}, time: {datetime.now()}")
+                            f"{symbol}: sell order was filled, price: {price}, qty: {qty}, total_profit: {self.positions.total_profit}, time: {datetime.now()}")
 
 
                     elif check_order.get('status') == OrderStatus.NEW.value:
