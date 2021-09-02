@@ -51,7 +51,7 @@ def get_data(trader: Union[BinanceFutureTrader, BinanceSpotTrader]):
             df.set_index('open_time', inplace=True)
             df.index = pd.to_datetime(df.index, unit='ms') + pd.Timedelta(hours=8)
 
-            print(df)
+            # print(df)
 
             # 计算下他们涨跌幅度.
             pct = df['close'] / df['open'] - 1

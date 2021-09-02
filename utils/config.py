@@ -33,7 +33,6 @@ class Config:
         self.initial_trade_value = 500
         self.trade_value_multiplier = 1.3
         self.increase_pos_when_drop_down = 0.05
-        self.open_pos_from_drop_down = 0.05
         self.exit_profit_pct = 0.01  # 出场的利润.
         self.profit_pull_back_pct = 0.01  # 回调百分比.
         self.trading_fee = 0.0004  #
