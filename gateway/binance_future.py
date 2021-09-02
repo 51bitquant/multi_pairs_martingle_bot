@@ -118,7 +118,6 @@ class BinanceFutureHttp(object):
             url += '?' + self.build_parameters(requery_dict)
         headers = {"X-MBX-APIKEY": self.key}
 
-        print(url)
         for i in range(0, self.try_counts):
             try:
                 response = requests.request(req_method.value, url=url, headers=headers, timeout=self.timeout, proxies=self.proxies)

@@ -205,6 +205,8 @@ class BinanceFutureTrader(object):
                     pull_back_pct = self.positions.positions.get(s, {}).get('profit_max_price', 0) / bid_price - 1
 
                     dump_pct = self.positions.positions.get(s, {}).get('last_entry_price', 0) / bid_price - 1
+                    current_increase_pos_count = self.positions.positions.get(s, {}).get('current_increase_pos_count',
+                                                                                         1)
 
                     # 判断是否是有利润，然后考虑出场.
                     if profit_pct >= config.exit_profit_pct and pull_back_pct >= config.profit_pull_back_pct and len(
@@ -226,9 +228,11 @@ class BinanceFutureTrader(object):
                             self.sell_orders_dict[s] = orders
 
                     # if the market price continue drop down you can increase your positions.
-                    elif dump_pct >= config.increase_pos_when_drop_down and len(self.buy_orders_dict.get(s, [])) <= 0:
-                        increase_pos_count = self.positions.positions.get(s, {}).get('current_increase_pos_count', 1)
-                        buy_value = config.initial_trade_value * config.trade_value_multiplier ** increase_pos_count
+
+                    elif dump_pct >= config.increase_pos_when_drop_down and len(self.buy_orders_dict.get(s,
+                                                                                                         [])) <= 0 and current_increase_pos_count <= config.max_increase_pos_count:
+
+                        buy_value = config.initial_trade_value * config.trade_value_multiplier ** current_increase_pos_count
 
                         qty = round_to(buy_value / bid_price, min_qty)
 

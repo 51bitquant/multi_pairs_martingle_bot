@@ -11,6 +11,7 @@
   "exit_profit_pct": 0.01,
   "profit_pull_back_pct": 0.01,
   "trading_fee": 0.0004,
+  "max_increase_pos_count": 5,
   "proxy_host": "",
   "proxy_port": 0
 }

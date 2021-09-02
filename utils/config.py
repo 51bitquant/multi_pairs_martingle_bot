@@ -37,6 +37,7 @@ class Config:
         self.exit_profit_pct = 0.01  # 出场的利润.
         self.profit_pull_back_pct = 0.01  # 回调百分比.
         self.trading_fee = 0.0004  #
+        self.max_increase_pos_count = 5
         self.proxy_host = ""  # proxy host
         self.proxy_port = 0  # proxy port
 

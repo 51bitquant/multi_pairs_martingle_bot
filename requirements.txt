@@ -1,3 +1,5 @@
 requests==2.22.0
 apscheduler==3.6.1
+pandas
+numpy
 
