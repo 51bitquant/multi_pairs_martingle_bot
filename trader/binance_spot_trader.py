@@ -284,6 +284,10 @@ class BinanceSpotTrader(object):
 
                 buy_value = config.initial_trade_value
                 min_qty = self.symbols_dict.get(s, {}).get('min_qty')
+                bid_price = self.tickers_dict.get(s, {}).get('bid_price', 0)  # bid price
+                if bid_price <= 0:
+                    print(f"error -> spot {s} bid_price is :{bid_price}")
+                    return
 
                 qty = round_to(buy_value / bid_price, min_qty)
 
