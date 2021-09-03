@@ -85,7 +85,7 @@ if __name__ == '__main__':
         trader = BinanceFutureTrader()
 
     trader.get_exchange_info()
-    # get_data(trader)  # for testing
+    get_data(trader)  # for testing
 
     scheduler = BackgroundScheduler()
     scheduler.add_job(get_data, trigger='cron', hour='*/1', args=(trader,))
