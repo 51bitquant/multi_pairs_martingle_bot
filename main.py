@@ -70,8 +70,10 @@ def get_data(trader: Union[BinanceFutureTrader, BinanceSpotTrader]):
 
             signals.append(value)
 
+    signals.sort(key=lambda x: x['pct'], reverse=True)
     signal_data['id'] = signal_data['id'] + 1
     signal_data['signals'] = signals
+    print(signal_data)
 
 if __name__ == '__main__':
 
