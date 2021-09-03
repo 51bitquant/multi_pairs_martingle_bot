@@ -52,18 +52,27 @@ def get_data(trader: Union[BinanceFutureTrader, BinanceSpotTrader]):
             df.set_index('open_time', inplace=True)
             df.index = pd.to_datetime(df.index, unit='ms') + pd.Timedelta(hours=8)
 
+            df_4hour = df.resample(rule='4H').agg({'open': 'first',
+                                        'high': 'max',
+                                        'low': 'min',
+                                        'close': 'last',
+                                        'volume': 'sum'
+                                        })
+
             # print(df)
 
             # calculate the pair's price change is one hour. you can modify the code below.
             pct = df['close'] / df['open'] - 1
+            pct_4h = df_4hour['close']/df_4hour['open'] - 1
 
-            value = {'pct': pct[-1], 'symbol': symbol}
+            value = {'pct': pct[-1], 'pct_4h':pct_4h[-1] , 'symbol': symbol}
+
 
             # calculate your signal here.
-            if pct[-1] >= config.pump_pct:
+            if value['pct'] >= config.pump_pct or value['pct_4h'] >= config.pump_pct_4h:
                 # the signal 1 mean buy signal.
                 value['signal'] = 1
-            elif pct[-1] <= -config.pump_pct:
+            elif value['pct'] <= -config.pump_pct or value['pct_4h'] <= -config.pump_pct_4h:
                 value['signal'] = -1
             else:
                 value['signal'] = 0

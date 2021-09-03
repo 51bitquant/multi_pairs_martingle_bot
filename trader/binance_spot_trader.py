@@ -295,7 +295,7 @@ class BinanceSpotTrader(object):
                                                          order_type=OrderType.LIMIT, quantity=qty,
                                                          price=bid_price)
 
-                print(f"{s} price change is {signal['pct']}, place buy order: {buy_order}")
+                print(f"{s} hour change: {signal['pct']}, 4hour change: {signal['pct_4h']}, place buy order: {buy_order}")
                 if buy_order:
                     # resolve buy orders
                     orders = self.buy_orders_dict.get(s, [])

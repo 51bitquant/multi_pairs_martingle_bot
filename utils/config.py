@@ -29,7 +29,8 @@ class Config:
         self.api_key: str = None
         self.api_secret: str = None
         self.max_pairs = 4
-        self.pump_pct = 0.03  # 需要涨多少以上才能进入交易池里面.
+        self.pump_pct = 0.026  # 需要涨多少以上才能进入交易池里面.
+        self.pump_pct_4h = 0.045  # 4小时的上涨.
         self.initial_trade_value = 500
         self.trade_value_multiplier = 1.3
         self.increase_pos_when_drop_down = 0.05
