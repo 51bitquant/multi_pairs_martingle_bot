@@ -260,8 +260,8 @@ class BinanceSpotTrader(object):
                 print(f"{s}: bid_price: {bid_price}, ask_price: {bid_price}")
 
 
-        symbols = self.positions.positions.keys()  # 有仓位的交易对信息.
-        pos_count = len(symbols)  # 仓位的个数.
+        pos_symbols = self.positions.positions.keys()  # 有仓位的交易对信息.
+        pos_count = len(pos_symbols)  # 仓位的个数.
 
         left_times = config.max_pairs - pos_count
 
@@ -274,7 +274,7 @@ class BinanceSpotTrader(object):
 
         index = 0
         for signal in signal_data.get('signals', []):
-            if signal['signal'] == 1 and index < left_times:
+            if signal['signal'] == 1 and index < left_times and signal['symbol'] not in pos_symbols:
 
                 index += 1
 
