@@ -279,7 +279,7 @@ class BinanceSpotTrader(object):
                 index += 1
 
                 s = signal['symbol']
-                print(f"{s} price change is {signal['pct']}")
+
                 # the last one hour's the symbol jump over some percent.
 
                 buy_value = config.initial_trade_value
@@ -291,6 +291,7 @@ class BinanceSpotTrader(object):
                                                          order_type=OrderType.LIMIT, quantity=qty,
                                                          price=bid_price)
 
+                print(f"{s} price change is {signal['pct']}, place buy order: {buy_order}")
                 if buy_order:
                     # resolve buy orders
                     orders = self.buy_orders_dict.get(s, [])
