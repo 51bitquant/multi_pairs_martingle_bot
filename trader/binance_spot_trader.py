@@ -267,7 +267,7 @@ class BinanceSpotTrader(object):
 
         if self.initial_id == signal_data.get('id', self.initial_id):
             # the id is not updated, indicates that the data is not updated.
-            print("the current initial_id is the same, we do nothing.")
+            # print("the current initial_id is the same, we do nothing.")
             return
 
         self.initial_id = signal_data.get('id', self.initial_id)
