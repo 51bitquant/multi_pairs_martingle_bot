@@ -45,10 +45,14 @@ A muti pairs martingle trading bot for Binance exchange.
     
 
 ## how-to use
-1. just config your config file, past your api key and secret from Binance.
+1. just config your config.json file, past your api key and secret from
+   Binance, and modify your settings in config.json file.
 2. run the main.py file, or you can use shell script by sh start.sh
 
-Now only support Future. Still in beta testing. Use at your own risk.
+
+
+## contact me
+Wechat: bitquant51
 
 
 
