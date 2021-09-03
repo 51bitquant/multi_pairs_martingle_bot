@@ -60,10 +60,10 @@ def get_data(trader: Union[BinanceFutureTrader, BinanceSpotTrader]):
             value = {'pct': pct[-1], 'symbol': symbol}
 
             # calculate your signal here.
-            if pct >= config.pump_pct:
+            if pct[-1] >= config.pump_pct:
                 # the signal 1 mean buy signal.
                 value['signal'] = 1
-            elif pct <= -config.pump_pct:
+            elif pct[-1] <= -config.pump_pct:
                 value['signal'] = -1
             else:
                 value['signal'] = 0
