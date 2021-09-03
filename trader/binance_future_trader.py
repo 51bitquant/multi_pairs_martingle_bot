@@ -75,7 +75,7 @@ class BinanceFutureTrader(object):
         if isinstance(tickers, list):
             for tick in tickers:
                 symbol = tick['symbol']
-                ticker = {"bid_price": tick['bidPrice'], "ask_price": tick["askPrice"]}
+                ticker = {"bid_price": float(tick['bidPrice']), "ask_price": float(tick["askPrice"])}
                 self.tickers_dict[symbol] = ticker
         else:
             self.tickers_dict = {}
