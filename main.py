@@ -32,15 +32,16 @@ import pandas as pd
 
 pd.set_option('expand_frame_repr', False)
 
-from utils.config import top_symbols
+from utils.config import signal_data
 
 
 def get_data(trader: Union[BinanceFutureTrader, BinanceSpotTrader]):
-    # traders.symbols 是一个字典.
+    # traders.symbols is a dict data structure.
     symbols = trader.symbols_dict.keys()
 
-    datas = []
+    signals = []
 
+    # we calculate the signal here.
     for symbol in symbols:
         klines = trader.get_klines(symbol=symbol, interval=Interval.HOUR_1, limit=100)
         if len(klines) > 0:
@@ -53,18 +54,24 @@ def get_data(trader: Union[BinanceFutureTrader, BinanceSpotTrader]):
 
             # print(df)
 
-            # 计算下他们涨跌幅度.
+            # calculate the pair's price change is one hour. you can modify the code below.
             pct = df['close'] / df['open'] - 1
 
             value = {'pct': pct[-1], 'symbol': symbol}
-            datas.append(value)
 
-    datas.sort(key=lambda x: x['pct'], reverse=True)
-    top_symbols['id'] = top_symbols['id'] + 1
-    top_symbols['symbols'] = datas
+            # calculate your signal here.
+            if pct >= config.pump_pct:
+                # the signal 1 mean buy signal.
+                value['signal'] = 1
+            elif pct <= -config.pump_pct:
+                value['signal'] = -1
+            else:
+                value['signal'] = 0
 
-    print(top_symbols)
+            signals.append(value)
 
+    signal_data['id'] = signal_data['id'] + 1
+    signal_data['signals'] = signals
 
 if __name__ == '__main__':
 

@@ -74,4 +74,4 @@ class Config:
 
 
 config = Config()
-top_symbols = {'id': 0, 'symbols': []}
+signal_data = {'id': 0, 'signals': []}

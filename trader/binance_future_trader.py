@@ -10,10 +10,8 @@
 
     or use the inviation code: 51bitquant
 
-    网格交易: 适合币圈的高波动率的品种，适合现货， 如果交易合约，需要注意防止极端行情爆仓。
-
-
     服务器购买地址: https://www.ucloud.cn/site/global.html?invitation_code=C1x2EA81CD79B8C#dongjing
+    The Multi-Pairs Martingle Trading Bot
 """
 
 from gateway import BinanceFutureHttp, OrderStatus, OrderType, OrderSide
@@ -21,7 +19,7 @@ from utils import config
 from utils import round_to
 import logging
 from datetime import datetime
-from utils.config import top_symbols
+from utils.config import signal_data
 from utils.positions import Positions
 
 
@@ -56,13 +54,13 @@ class BinanceFutureTrader(object):
                     symbol = item['symbol']
                     symbol_data = {"symbol": symbol}
 
-                    for fil in item['filters']:
-                        if fil['filterType'] == 'PRICE_FILTER':
-                            symbol_data['min_price'] = float(fil['tickSize'])
-                        elif fil['filterType'] == 'LOT_SIZE':
-                            symbol_data['min_qty'] = float(fil['stepSize'])
-                        elif fil['filterType'] == 'MIN_NOTIONAL':
-                            symbol_data['min_notional'] = float(fil['notional'])
+                    for filters in item['filters']:
+                        if filters['filterType'] == 'PRICE_FILTER':
+                            symbol_data['min_price'] = float(filters['tickSize'])
+                        elif filters['filterType'] == 'LOT_SIZE':
+                            symbol_data['min_qty'] = float(filters['stepSize'])
+                        elif filters['filterType'] == 'MIN_NOTIONAL':
+                            symbol_data['min_notional'] = float(filters['notional'])
 
                     self.symbols_dict[symbol] = symbol_data
 
@@ -218,7 +216,8 @@ class BinanceFutureTrader(object):
                         # cancel the buy orders. when we want to place sell orders, we need to cancel the buy orders.
                         buy_orders = self.buy_orders_dict.get(s, [])
                         for buy_order in buy_orders:
-                            print("cancel the buy orders. when we want to place sell orders, we need to cancel the buy orders.")
+                            print(
+                                "cancel the buy orders. when we want to place sell orders, we need to cancel the buy orders.")
                             self.http_client.cancel_order(s, buy_order.get('clientOrderId'))
                         # 处理价格和精度.
                         qty = round_to(abs(pos), min_qty)
@@ -241,7 +240,8 @@ class BinanceFutureTrader(object):
                         # cancel the sell orders, when we want to place buy orders, we need to cancel the sell orders.
                         sell_orders = self.sell_orders_dict.get(s, [])
                         for sell_order in sell_orders:
-                            print("cancel the sell orders, when we want to place buy orders, we need to cancel the sell orders")
+                            print(
+                                "cancel the sell orders, when we want to place buy orders, we need to cancel the sell orders")
                             self.http_client.cancel_order(s, sell_order.get('clientOrderId'))
 
                         buy_value = config.initial_trade_value * config.trade_value_multiplier ** current_increase_pos_count
@@ -266,38 +266,38 @@ class BinanceFutureTrader(object):
 
         left_times = config.max_pairs - pos_count
 
-        if self.initial_id == top_symbols.get('id', self.initial_id):
+        if self.initial_id == signal_data.get('id', self.initial_id):
             # the id is not updated, indicates that the data is not updated.
+            # print("the current initial_id is the same, we do nothing.")
             return
-        else:
-            # there is new data, we need to update the new id too.
 
-            self.initial_id = top_symbols.get('id', self.initial_id)
+        self.initial_id = signal_data.get('id', self.initial_id)
 
-        if len(top_symbols) > left_times > 0:
-            trade_data = top_symbols[0:left_times]
+        index = 0
+        for signal in signal_data.get('signals', []):
+            if signal['signal'] == 1 and index < left_times:
 
-            for data in trade_data:
-                if data['pct'] >= config.pump_pct:
-                    s = data['symbol']
-                    print(f"{s}  price change is {data['pct']}")
-                    # the last one hour's the symbol jump over some percent.
+                index += 1
 
-                    buy_value = config.initial_trade_value
-                    min_qty = self.symbols_dict.get(s, {}).get('min_qty')
+                s = signal['symbol']
+                print(f"{s} price change is {signal['pct']}")
+                # the last one hour's the symbol jump over some percent.
 
-                    qty = round_to(buy_value / bid_price, min_qty)
+                buy_value = config.initial_trade_value
+                min_qty = self.symbols_dict.get(s, {}).get('min_qty')
 
-                    buy_order = self.http_client.place_order(symbol=s, order_side=OrderSide.BUY,
-                                                             order_type=OrderType.LIMIT, quantity=qty,
-                                                             price=bid_price)
+                qty = round_to(buy_value / bid_price, min_qty)
 
-                    if buy_order:
-                        # resolve buy orders
-                        orders = self.buy_orders_dict.get(s, [])
-                        orders.append(buy_order)
-                        self.buy_orders_dict[s] = orders
+                buy_order = self.http_client.place_order(symbol=s, order_side=OrderSide.BUY,
+                                                         order_type=OrderType.LIMIT, quantity=qty,
+                                                         price=bid_price)
+
+                if buy_order:
+                    # resolve buy orders
+                    orders = self.buy_orders_dict.get(s, [])
+                    orders.append(buy_order)
+                    self.buy_orders_dict[s] = orders
 
 
-                else:
-                    pass
+            else:
+                pass
