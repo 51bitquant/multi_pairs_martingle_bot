@@ -163,7 +163,7 @@ class BinanceSpotTrader(object):
                             f"sell order status is not in above options: {check_order.get('status')}, 时间: {datetime.now()}")
 
         # the expired\canceled\delete orders
-        for delete_order in delete_buy_orders:
+        for delete_order in delete_sell_orders:
             for key in self.sell_orders_dict.keys():
                 orders = self.sell_orders_dict.get(key, [])
                 if delete_order in orders:
