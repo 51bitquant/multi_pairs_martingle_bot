@@ -29,6 +29,7 @@ from typing import Union
 from gateway.binance_future import Interval
 import numpy as np
 import pandas as pd
+from datetime import datetime
 
 pd.set_option('expand_frame_repr', False)
 
@@ -81,6 +82,7 @@ def get_data(trader: Union[BinanceFutureTrader, BinanceSpotTrader]):
 
     signals.sort(key=lambda x: x['pct'], reverse=True)
     signal_data['id'] = signal_data['id'] + 1
+    signal_data['time'] = datetime.now()
     signal_data['signals'] = signals
     print(signal_data)
 
