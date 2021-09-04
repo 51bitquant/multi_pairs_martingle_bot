@@ -102,7 +102,19 @@ class BinanceFutureTrader(object):
                     if check_order.get('status') == OrderStatus.CANCELED.value:
                         delete_buy_orders.append(buy_order)
 
-                        print(f"{buy_order.get('symbol')}: buy order was canceled, time: {datetime.now()}")
+                        symbol = buy_order.get('symbol')
+                        print(f"{symbol}: buy order was canceled, time: {datetime.now()}")
+
+                        price = float(check_order.get('price'))
+                        qty = float(check_order.get('executedQty', 0))
+                        min_qty = self.symbols_dict.get(symbol).get('min_qty', 0)
+
+                        if qty > 0:
+                            self.positions.update(symbol=symbol, trade_price=price, trade_amount=qty, min_qty=min_qty,
+                                                  is_buy=True)
+
+                            logging.info(
+                                f"{symbol}: buy order was partially filled, price: {price}, qty: {qty}, time: {datetime.now()}")
 
                     elif check_order.get('status') == OrderStatus.FILLED.value:
                         delete_buy_orders.append(buy_order)
@@ -142,7 +154,20 @@ class BinanceFutureTrader(object):
                     if check_order.get('status') == OrderStatus.CANCELED.value:
                         delete_sell_orders.append(sell_order)
 
-                        print(f"{sell_order.get('symbol')}: sell order was canceled, time: {datetime.now()}")
+                        symbol = sell_order.get('symbol')
+                        print(f"{symbol}: sell order was canceled, time: {datetime.now()}")
+
+                        price = float(check_order.get('price'))
+                        qty = float(check_order.get('executedQty', 0))
+                        min_qty = self.symbols_dict.get(symbol).get('min_qty', 0)
+
+                        if qty > 0:
+                            self.positions.update(symbol=symbol, trade_price=price, trade_amount=qty, min_qty=min_qty,
+                                                  is_buy=False)
+
+                            logging.info(
+                                f"{symbol}: sell order was partially filled, price: {price}, qty: {qty}, total_profit: {self.positions.total_profit}, time: {datetime.now()}")
+
                     elif check_order.get('status') == OrderStatus.FILLED.value:
                         delete_sell_orders.append(sell_order)
 

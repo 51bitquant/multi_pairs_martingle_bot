@@ -120,7 +120,8 @@ class BinanceFutureHttp(object):
 
         for i in range(0, self.try_counts):
             try:
-                response = requests.request(req_method.value, url=url, headers=headers, timeout=self.timeout, proxies=self.proxies)
+                response = requests.request(req_method.value, url=url, headers=headers, timeout=self.timeout,
+                                            proxies=self.proxies)
                 if response.status_code == 200:
                     return response.json()
                 else:
@@ -211,6 +212,7 @@ class BinanceFutureHttp(object):
             if isinstance(data, list) and len(data):
                 return data
         return []
+
     def get_latest_price(self, symbol):
         path = "/fapi/v1/ticker/price"
         query_dict = {"symbol": symbol}
@@ -299,15 +301,15 @@ class BinanceFutureHttp(object):
         # print(params)
         return self.request(RequestMethod.POST, path=path, requery_dict=params, verify=True)
 
-    def get_order(self, symbol, client_order_id=None):
+    def get_order(self, symbol, client_order_id: str = ""):
         path = "/fapi/v1/order"
-        query_dict = {"symbol": symbol, "timestamp": self._timestamp()}
+        params = {"symbol": symbol, "timestamp": self._timestamp()}
         if client_order_id:
-            query_dict["origClientOrderId"] = client_order_id
+            params["origClientOrderId"] = client_order_id
 
-        return self.request(RequestMethod.GET, path, query_dict, verify=True)
+        return self.request(RequestMethod.GET, path, params, verify=True)
 
-    def cancel_order(self, symbol, client_order_id=None):
+    def cancel_order(self, symbol, client_order_id: str = ""):
         path = "/fapi/v1/order"
         params = {"symbol": symbol, "timestamp": self._timestamp()}
         if client_order_id:
@@ -315,7 +317,7 @@ class BinanceFutureHttp(object):
 
         return self.request(RequestMethod.DELETE, path, params, verify=True)
 
-    def get_open_orders(self, symbol=None):
+    def get_open_orders(self, symbol: str = ""):
         path = "/fapi/v1/openOrders"
 
         params = {"timestamp": self._timestamp()}

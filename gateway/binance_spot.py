@@ -1,4 +1,3 @@
-
 """
 
     币安推荐码:  返佣10%
@@ -16,7 +15,6 @@
 
     服务器购买地址: https://www.ucloud.cn/site/global.html?invitation_code=C1x2EA81CD79B8C#dongjing
 """
-
 
 import requests
 import time
@@ -88,7 +86,7 @@ class BinanceSpotHttp(object):
         self.timeout = timeout
         self.order_count_lock = Lock()
         self.order_count = 1_000_000
-        self.try_counts = try_counts # 失败尝试的次数.
+        self.try_counts = try_counts  # 失败尝试的次数.
         self.proxy_host = proxy_host
         self.proxy_port = proxy_port
 
@@ -116,7 +114,8 @@ class BinanceSpotHttp(object):
         headers = {"X-MBX-APIKEY": self.api_key}
         for i in range(0, self.try_counts):
             try:
-                response = requests.request(req_method.value, url=url, headers=headers, timeout=self.timeout, proxies=self.proxies)
+                response = requests.request(req_method.value, url=url, headers=headers, timeout=self.timeout,
+                                            proxies=self.proxies)
                 if response.status_code == 200:
                     return response.json()
                 else:
@@ -309,7 +308,7 @@ class BinanceSpotHttp(object):
 
         return self.request(RequestMethod.POST, path=path, requery_dict=params, verify=True)
 
-    def get_order(self, symbol: str, client_order_id: str):
+    def get_order(self, symbol: str, client_order_id: str = ""):
         """
         获取订单状态.
         :param symbol:
@@ -317,7 +316,15 @@ class BinanceSpotHttp(object):
         :return:
         """
         path = "/api/v3/order"
-        prams = {"symbol": symbol, "timestamp": self.get_current_timestamp(), "origClientOrderId": client_order_id}
+        prams = {"symbol": symbol, "timestamp": self.get_current_timestamp()}
+        if client_order_id:
+            prams["origClientOrderId"] = client_order_id
+
+        return self.request(RequestMethod.GET, path, prams, verify=True)
+
+    def get_all_orders(self, symbol:str):
+        path = "/api/v3/allOrders"
+        prams = {"symbol": symbol, "timestamp": self.get_current_timestamp()}
 
         return self.request(RequestMethod.GET, path, prams, verify=True)
 

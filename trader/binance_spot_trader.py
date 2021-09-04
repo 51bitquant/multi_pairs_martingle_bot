@@ -49,9 +49,12 @@ class BinanceSpotTrader(object):
             items = data.get('symbols', [])
             for item in items:
 
+                symbol = item['symbol']
+                if symbol.__contains__('UP') or symbol.__contains__('DOWN'):
+                    continue
+
                 if item.get('quoteAsset') == 'USDT' and item.get('status') == "TRADING":
 
-                    symbol = item['symbol']
                     symbol_data = {"symbol": symbol}
                     for filters in item['filters']:
                         if filters['filterType'] == 'PRICE_FILTER':
@@ -100,7 +103,20 @@ class BinanceSpotTrader(object):
                     if check_order.get('status') == OrderStatus.CANCELED.value:
                         delete_buy_orders.append(buy_order)
 
-                        print(f"{buy_order.get('symbol')}: buy order was canceled, time: {datetime.now()}")
+                        symbol = buy_order.get('symbol')
+                        print(f"{symbol}: buy order was canceled,  time: {datetime.now()}")
+
+                        min_qty = self.symbols_dict.get(symbol).get('min_qty', 0)
+                        price = float(check_order.get('price'))
+                        qty = float(check_order.get('executedQty', 0))
+
+                        if qty > 0:
+                            self.positions.update(symbol=symbol, trade_price=price, trade_amount=qty, min_qty=min_qty,
+                                                  is_buy=True)
+
+                            logging.info(
+                                f"{symbol}: buy order was partially filled, price: {price}, qty: {qty}, time: {datetime.now()}")
+
 
                     elif check_order.get('status') == OrderStatus.FILLED.value:
                         delete_buy_orders.append(buy_order)
@@ -140,7 +156,21 @@ class BinanceSpotTrader(object):
                     if check_order.get('status') == OrderStatus.CANCELED.value:
                         delete_sell_orders.append(sell_order)
 
-                        print(f"{sell_order.get('symbol')}: sell order was canceled, time: {datetime.now()}")
+                        symbol = sell_order.get('symbol')
+                        print(f"{symbol}: sell order was canceled, time: {datetime.now()}")
+
+                        min_qty = self.symbols_dict.get(symbol).get('min_qty', 0)
+                        price = float(check_order.get('price'))
+                        qty = float(check_order.get('executedQty', 0))
+
+                        if qty > 0:
+                            self.positions.update(symbol=symbol, trade_price=price, trade_amount=qty, min_qty=min_qty,
+                                                  is_buy=False)
+
+                            logging.info(
+                                f"{symbol}: sell order was partially filled, price: {price}, qty: {qty}, total_profit: {self.positions.total_profit}, time: {datetime.now()}")
+
+
                     elif check_order.get('status') == OrderStatus.FILLED.value:
                         delete_sell_orders.append(sell_order)
 
@@ -259,7 +289,6 @@ class BinanceSpotTrader(object):
             else:
                 print(f"{s}: bid_price: {bid_price}, ask_price: {bid_price}")
 
-
         pos_symbols = self.positions.positions.keys()  # 有仓位的交易对信息.
         pos_count = len(pos_symbols)  # 仓位的个数.
 
@@ -295,7 +324,8 @@ class BinanceSpotTrader(object):
                                                          order_type=OrderType.LIMIT, quantity=qty,
                                                          price=bid_price)
 
-                print(f"{s} hour change: {signal['pct']}, 4hour change: {signal['pct_4h']}, place buy order: {buy_order}")
+                print(
+                    f"{s} hour change: {signal['pct']}, 4hour change: {signal['pct_4h']}, place buy order: {buy_order}")
                 if buy_order:
                     # resolve buy orders
                     orders = self.buy_orders_dict.get(s, [])
