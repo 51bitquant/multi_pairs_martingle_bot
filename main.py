@@ -47,9 +47,9 @@ def get_data(trader: Union[BinanceFutureTrader, BinanceSpotTrader]):
         klines = trader.get_klines(symbol=symbol, interval=Interval.HOUR_1, limit=100)
         if len(klines) > 0:
             df = pd.DataFrame(klines, dtype=np.float64,
-                              columns=['open_time', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'a1', 'a2',
+                              columns=['open_time', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'turnover', 'a2',
                                        'a3', 'a4', 'a5'])
-            df = df[['open_time', 'open', 'high', 'low', 'close', 'volume']]
+            df = df[['open_time', 'open', 'high', 'low', 'close', 'volume', 'turnover']]
             df.set_index('open_time', inplace=True)
             df.index = pd.to_datetime(df.index, unit='ms') + pd.Timedelta(hours=8)
 
@@ -57,7 +57,8 @@ def get_data(trader: Union[BinanceFutureTrader, BinanceSpotTrader]):
                                         'high': 'max',
                                         'low': 'min',
                                         'close': 'last',
-                                        'volume': 'sum'
+                                        'volume': 'sum',
+                                        'turnover': 'sum'
                                         })
 
             # print(df)
@@ -66,7 +67,7 @@ def get_data(trader: Union[BinanceFutureTrader, BinanceSpotTrader]):
             pct = df['close'] / df['open'] - 1
             pct_4h = df_4hour['close']/df_4hour['open'] - 1
 
-            value = {'pct': pct[-1], 'pct_4h':pct_4h[-1] , 'symbol': symbol}
+            value = {'pct': pct[-1], 'pct_4h':pct_4h[-1] , 'symbol': symbol, 'hour_turnover': df['turnover'][-1]}
 
 
             # calculate your signal here.
@@ -89,11 +90,16 @@ def get_data(trader: Union[BinanceFutureTrader, BinanceSpotTrader]):
 if __name__ == '__main__':
 
     config.loads('./config.json')
+    print(config.blocked_lists)
 
     if config.platform == 'binance_spot':
         trader = BinanceSpotTrader()
     else:
         trader = BinanceFutureTrader()
+
+
+
+    exit()
 
     trader.get_exchange_info()
     get_data(trader)  # for testing

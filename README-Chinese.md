@@ -44,10 +44,23 @@ A muti pairs martingle trading bot for Binance exchange.
  
 11. max_increase_pos_count: 最大的加仓次数.
     
+12. turnover_threshold:
+    这个是过滤值，就是要求一小时的最低成交量不能低于多少，默认是值 100,000 USDT.
+13. blocked_lists:
+    这个是禁止交易的交易对，如果你想过滤某写不想交易的山寨币，你可以把他们放在这个列表上如:
+    ['XMLUSDT', 'XRPUSDT'],
+    
+14. allowed_lists: 如果你只想交易某一些交易对，那么放这里:
+    ['BTCUSDT', 'ETHUSDT', 'ADAUSDT', 'BNBUSDT']
+
+15. proxy_host: 代理主机ip地址： 如'132.148.123.22'
+
+16. proxy_port: 代理主机的端口号如: 8888, 9999 ect.
+
 
 ## 如何使用
-1. 把代码下载下来，然后配置你的交易所的api key 和 secret,
-   然后修改你相应的配置选项，选项值的配置值如上面描述
+1. 把代码下载下来，然后编辑config.json文件，它会读取你这个配置文件，记得填写你的交易所的api
+   key 和 secret, 然后保存该配置文件，配置文件选项的说明如上面描述。
 2. 直接运行main.py文件或者通过shell脚本运行, 执行 sh start.sh 就可以运行。
 
 

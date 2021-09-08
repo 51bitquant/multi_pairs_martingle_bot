@@ -25,6 +25,14 @@ from utils.positions import Positions
 
 
 class BinanceSpotTrader(object):
+    """
+        免责声明:
+        the binance spot trader, 币安现货马丁格尔策略.
+        the Martingle strategy in Crypto Market will endure a lot of risk， use it before you understand the risk and martingle strategy, and the code may have bugs,
+        Use it at your own risk. We won't ensure you will earn money from this code.
+        马丁策略在合约上会有很大的风险，请注意风险, 使用前请熟知该代码，可能会有bugs或者其他未知的风险。
+
+    """
 
     def __init__(self):
         """
@@ -40,7 +48,7 @@ class BinanceSpotTrader(object):
 
         self.buy_orders_dict = {}  # 买单字典 buy orders {'symbol': [], 'symbol1': []}
         self.sell_orders_dict = {}  # 卖单字典. sell orders  {'symbol': [], 'symbol1': []}
-        self.positions = Positions()
+        self.positions = Positions('spot_positions.json')
         self.initial_id = 0
 
     def get_exchange_info(self):
@@ -187,10 +195,10 @@ class BinanceSpotTrader(object):
 
 
                     elif check_order.get('status') == OrderStatus.NEW.value:
-                        print(f"sell order status is: New, 时间: {datetime.now()}")
+                        print(f"sell order status is: New, time: {datetime.now()}")
                     else:
                         print(
-                            f"sell order status is not in above options: {check_order.get('status')}, 时间: {datetime.now()}")
+                            f"sell order status is not in above options: {check_order.get('status')}, time: {datetime.now()}")
 
         # the expired\canceled\delete orders
         for delete_order in delete_sell_orders:
@@ -221,8 +229,8 @@ class BinanceSpotTrader(object):
             if bid_price > 0 and ask_price > 0:
                 value = pos * bid_price
                 if value < self.symbols_dict.get(s, {}).get('min_notional', 0):
-                    print(f"{s} 的仓位价值小于最小的仓位价值, 所以删除了该交易对的仓位.")
-                    del self.positions.positions[s]  # 删除仓位价值比较小的交易对.
+                    print(f"{s} notional value is small, delete the position data.")
+                    del self.positions.positions[s]  # delete the position data if the position notional is very small.
                 else:
                     avg_price = pos_data.get('avg_price')
                     self.positions.update_profit_max_price(s, bid_price)
@@ -234,7 +242,7 @@ class BinanceSpotTrader(object):
                     current_increase_pos_count = self.positions.positions.get(s, {}).get('current_increase_pos_count',
                                                                                          1)
 
-                    # 判断是否是有利润，然后考虑出场.
+                    # there is profit here, consider whether exit this position.
                     if profit_pct >= config.exit_profit_pct and pull_back_pct >= config.profit_pull_back_pct and len(
                             self.sell_orders_dict.get(s, [])) <= 0:
                         """
@@ -247,7 +255,7 @@ class BinanceSpotTrader(object):
                             print(
                                 "cancel the buy orders. when we want to place sell orders, we need to cancel the buy orders.")
                             self.http_client.cancel_order(s, buy_order.get('clientOrderId'))
-                        # 处理价格和精度.
+                        # the price tick and quantity precision.
                         qty = round_to(abs(pos), min_qty)
 
                         sell_order = self.http_client.place_order(symbol=s, order_side=OrderSide.SELL,
@@ -303,35 +311,40 @@ class BinanceSpotTrader(object):
 
         index = 0
         for signal in signal_data.get('signals', []):
-            if signal['signal'] == 1 and index < left_times and signal['symbol'] not in pos_symbols:
+            s = signal['symbol']
+            if signal['signal'] == 1 and index < left_times and s not in pos_symbols and signal[
+                'hour_turnover'] >= config.turnover_threshold:
+                if len(config.allowed_lists) > 0 and s in config.allowed_lists:
 
-                index += 1
+                    index += 1
+                    # the last one hour's the symbol jump over some percent.
+                    self.place_order(s, signal['pct'], signal['pct_4h'])
 
-                s = signal['symbol']
+                elif s not in config.blocked_lists:
+                    index += 1
+                    self.place_order(s, signal['pct'], signal['pct_4h'])
 
-                # the last one hour's the symbol jump over some percent.
+        self.positions.save_data()
 
-                buy_value = config.initial_trade_value
-                min_qty = self.symbols_dict.get(s, {}).get('min_qty')
-                bid_price = self.tickers_dict.get(s, {}).get('bid_price', 0)  # bid price
-                if bid_price <= 0:
-                    print(f"error -> spot {s} bid_price is :{bid_price}")
-                    return
+    def place_order(self, symbol: str, hour_change: float, four_hour_change: float):
 
-                qty = round_to(buy_value / bid_price, min_qty)
+        buy_value = config.initial_trade_value
+        min_qty = self.symbols_dict.get(symbol, {}).get('min_qty')
+        bid_price = self.tickers_dict.get(symbol, {}).get('bid_price', 0)  # bid price
+        if bid_price <= 0:
+            print(f"error -> spot {symbol} bid_price is :{bid_price}")
+            return
 
-                buy_order = self.http_client.place_order(symbol=s, order_side=OrderSide.BUY,
-                                                         order_type=OrderType.LIMIT, quantity=qty,
-                                                         price=bid_price)
+        qty = round_to(buy_value / bid_price, min_qty)
 
-                print(
-                    f"{s} hour change: {signal['pct']}, 4hour change: {signal['pct_4h']}, place buy order: {buy_order}")
-                if buy_order:
-                    # resolve buy orders
-                    orders = self.buy_orders_dict.get(s, [])
-                    orders.append(buy_order)
-                    self.buy_orders_dict[s] = orders
+        buy_order = self.http_client.place_order(symbol=symbol, order_side=OrderSide.BUY,
+                                                 order_type=OrderType.LIMIT, quantity=qty,
+                                                 price=bid_price)
 
-
-            else:
-                pass
+        print(
+            f"{symbol} hour change: {hour_change}, 4hour change: {four_hour_change}, place buy order: {buy_order}")
+        if buy_order:
+            # resolve buy orders
+            orders = self.buy_orders_dict.get(symbol, [])
+            orders.append(buy_order)
+            self.buy_orders_dict[symbol] = orders

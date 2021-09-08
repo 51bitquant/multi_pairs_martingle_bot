@@ -29,18 +29,20 @@ class Config:
         self.api_key: str = None
         self.api_secret: str = None
         self.max_pairs = 4
-        self.pump_pct = 0.026  # 需要涨多少以上才能进入交易池里面.
-        self.pump_pct_4h = 0.045  # 4小时的上涨.
+        self.pump_pct = 0.026  # the price need to go up over  2.6% in 1 hour， then you may consider to enter a position
+        self.pump_pct_4h = 0.045  # the price need to go up over  2.6% in 4 hour， then you may consider to enter a position
         self.initial_trade_value = 500
         self.trade_value_multiplier = 1.3
         self.increase_pos_when_drop_down = 0.05
-        self.exit_profit_pct = 0.01  # 出场的利润.
-        self.profit_pull_back_pct = 0.01  # 回调百分比.
+        self.exit_profit_pct = 0.01  # profit percent
+        self.profit_pull_back_pct = 0.01  # pull back percent.
         self.trading_fee = 0.0004  #
         self.max_increase_pos_count = 5
         self.proxy_host = ""  # proxy host
         self.proxy_port = 0  # proxy port
-
+        self.blocked_lists = []  # symbols ['BTCUSDT', 'ETHUSDT', ... ], the symbols in here will not trade.
+        self.allowed_lists = []  # symbols ['BTCUSDT', 'ETHUSDT', ... ], if the list contains value(not empty), it will only trade the symbol in this lists
+        self.turnover_threshold = 100,000  # 100k usdt, the trading value should be higher than 100k usdt in an hour.
 
     def loads(self, config_file=None):
         """ Load config file.
