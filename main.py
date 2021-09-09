@@ -98,9 +98,6 @@ if __name__ == '__main__':
         trader = BinanceFutureTrader()
 
 
-
-    exit()
-
     trader.get_exchange_info()
     get_data(trader)  # for testing
 
