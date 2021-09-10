@@ -24,6 +24,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(level=logging.INFO, format=format, filename='log.txt')
+logging.getLogger("apscheduler.scheduler").setLevel(logging.WARNING)
 logger = logging.getLogger('binance')
 from typing import Union
 from gateway.binance_future import Interval
