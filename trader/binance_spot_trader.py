@@ -314,13 +314,17 @@ class BinanceSpotTrader(object):
             s = signal['symbol']
             if signal['signal'] == 1 and index < left_times and s not in pos_symbols and signal[
                 'hour_turnover'] >= config.turnover_threshold:
+                ## allowed_lists and blocked_lists cannot be satisfied at the same time
                 if len(config.allowed_lists) > 0 and s in config.allowed_lists:
-
                     index += 1
                     # the last one hour's the symbol jump over some percent.
                     self.place_order(s, signal['pct'], signal['pct_4h'])
 
-                elif s not in config.blocked_lists:
+                if s not in config.blocked_lists and len(config.allowed_lists) == 0:
+                    index += 1
+                    self.place_order(s, signal['pct'], signal['pct_4h'])
+
+                if len(config.allowed_lists) == 0 and config.blocked_lists == 0:
                     index += 1
                     self.place_order(s, signal['pct'], signal['pct_4h'])
 
