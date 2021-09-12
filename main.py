@@ -93,7 +93,7 @@ if __name__ == '__main__':
     config.loads('./config.json')
     print(config.blocked_lists)
 
-    if config.platform == 'binance_spot':
+    if config.platform == 'binance_spot':  # binance_spot
         trader = BinanceSpotTrader()
     else:
         trader = BinanceFutureTrader()
