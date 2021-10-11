@@ -218,6 +218,7 @@ class BinanceSpotTrader(object):
 
         symbols = self.positions.positions.keys()
 
+        deleted_positions = []
         for s in symbols:
             pos_data = self.positions.positions.get(s)
             pos = pos_data.get('pos')
@@ -230,7 +231,8 @@ class BinanceSpotTrader(object):
                 value = pos * bid_price
                 if value < self.symbols_dict.get(s, {}).get('min_notional', 0):
                     print(f"{s} notional value is small, delete the position data.")
-                    del self.positions.positions[s]  # delete the position data if the position notional is very small.
+                    deleted_positions.append(s) #
+                    # del self.positions.positions[s]  # delete the position data if the position notional is very small.
                 else:
                     avg_price = pos_data.get('avg_price')
                     self.positions.update_profit_max_price(s, bid_price)
@@ -296,6 +298,9 @@ class BinanceSpotTrader(object):
 
             else:
                 print(f"{s}: bid_price: {bid_price}, ask_price: {bid_price}")
+
+        for s in deleted_positions:
+            del self.positions.positions[s]  # delete the position data if the position notional is very small.
 
         pos_symbols = self.positions.positions.keys()  # 有仓位的交易对信息.
         pos_count = len(pos_symbols)  # 仓位的个数.
