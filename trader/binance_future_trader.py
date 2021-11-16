@@ -291,6 +291,7 @@ class BinanceFutureTrader(object):
 
         for s in deleted_positions:
             del self.positions.positions[s]  # delete the position data if the position notional is very small.
+        self.positions.save_data()
 
         pos_symbols = self.positions.positions.keys()  # the position's symbols, if there is {"symbol": postiondata}, you get the symbols here.
         pos_count = len(pos_symbols)  # position count
@@ -326,7 +327,7 @@ class BinanceFutureTrader(object):
                     index += 1
                     self.place_order(s, signal['pct'], signal['pct_4h'])
 
-        self.positions.save_data()
+
 
     def place_order(self, symbol: str, hour_change: float, four_hour_change: float):
 
