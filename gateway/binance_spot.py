@@ -22,6 +22,7 @@ import hmac
 import hashlib
 from enum import Enum
 from threading import Lock
+from decimal import Decimal
 
 
 class OrderStatus(Enum):
@@ -262,7 +263,7 @@ class BinanceSpotHttp(object):
         hex_digest = hmac.new(self.secret.encode('utf8'), query_string.encode("utf-8"), hashlib.sha256).hexdigest()
         return query_string + '&signature=' + str(hex_digest)
 
-    def place_order(self, symbol: str, order_side: OrderSide, order_type: OrderType, quantity: float, price: float,
+    def place_order(self, symbol: str, order_side: OrderSide, order_type: OrderType, quantity: Decimal, price: Decimal,
                     client_order_id: str = None, time_inforce="GTC", stop_price=0):
         """
 

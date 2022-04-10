@@ -298,7 +298,7 @@ class BinanceFutureHttp(object):
                 params["stopPrice"] = stop_price
             else:
                 raise ValueError("stopPrice must greater than 0")
-        # print(params)
+
         return self.request(RequestMethod.POST, path=path, requery_dict=params, verify=True)
 
     def get_order(self, symbol, client_order_id: str = ""):
@@ -374,54 +374,3 @@ class BinanceFutureHttp(object):
         path = "/fapi/v1/positionRisk"
         params = {"timestamp": self._timestamp()}
         return self.request(RequestMethod.GET, path, params, verify=True)
-
-
-if __name__ == '__main__':
-    # import pandas as pd
-
-    key = "xxxx"
-    secret = 'xxxx'
-    binance = BinanceFutureHttp(api_key=key, secret=secret)
-
-    # import datetime
-    # print(datetime.datetime.now())
-
-    data = binance.get_kline('BTCUSDT', Interval.HOUR_1, limit=100)
-    print(data)
-    print(isinstance(data, list))
-
-    exit()
-    # info = binance.exchangeInfo()
-    # print(info)
-    # exit()
-    # print(binance.order_book(symbol='BTCUSDT', limit=5))
-    # exit()
-
-    # print(binance.latest_price('BTCUSDT'))
-    # kline = binance.kline('BTCUSDT', interval='1m')
-    # print(pd.DataFrame(kline))
-
-    # print(binance.ticker("BTCUSDT"))
-
-    # print(binance.get_ticker('BTCUSDT'))
-    # {'symbol': 'BTCUSDT', 'side': 'SELL', 'type': 'LIMIT', 'quantity': 0.001, 'price': 8360.82, 'recvWindow': 5000, 'timestamp': 1570969995974, 'timeInForce': 'GTC'}
-
-    # data = binance.place_order(symbol="BTCUSDT", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=0.001, price=8250.82)
-    # print(data)
-
-    # cancel_order = binance.cancel_order("BTCUSDT", order_id="30714952")
-    # print(cancel_order)
-
-    # balance = binance.get_balance()
-    # print(balance)
-
-    # account_info = binance.get_account_info()
-    # print(account_info)
-
-    # account_info = binance.get_position_info()
-    # print(account_info)
-
-    """
-    {'orderId': 30714952, 'symbol': 'BTCUSDT', 'accountId': 18396, 'status': 'NEW', 'clientOrderId': 'ZC3qSbzbODl0GId9idK9hM', 'price': '7900', 'origQty': '0.010', 'executedQty': '0', 'cumQty': '0', 'cumQuote': '0', 'timeInForce': 'GTC', 'type': 'LIMIT', 'reduceOnly': False, 'side': 'BUY', 'stopPrice': '0', 'updateTime': 1569658787083}
-    {'orderId': 30714952, 'symbol': 'BTCUSDT', 'accountId': 18396, 'status': 'NEW', 'clientOrderId': 'ZC3qSbzbODl0GId9idK9hM', 'price': '7900', 'origQty': '0.010', 'executedQty': '0', 'cumQty': '0', 'cumQuote': '0', 'timeInForce': 'GTC', 'type': 'LIMIT', 'reduceOnly': False, 'side': 'BUY', 'stopPrice': '0', 'updateTime': 1569658787083}
-    """

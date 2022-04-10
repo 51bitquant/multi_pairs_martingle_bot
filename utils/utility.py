@@ -22,7 +22,7 @@
 
 import json
 from pathlib import Path
-from decimal import Decimal
+from decimal import Decimal, ROUND_DOWN, ROUND_UP
 
 
 def _get_trader_dir(temp_name: str):
@@ -89,12 +89,27 @@ def save_json(filename: str, data: dict):
         )
 
 
-def round_to(value: float, target: float) -> float:
+def round_to(value: float, target: float) -> Decimal:
     """
     Round price to price tick value.
     """
+    if target >= 1:
+        target = int(target)
+
     value = Decimal(str(value))
     target = Decimal(str(target))
-    rounded = float(int(round(value / target)) * target)
+    rounded = value.quantize(target)
     return rounded
 
+def floor_to(value: float, target: float) -> Decimal:
+    """
+    Similar to math.floor function, but to target float number.
+    """
+    if target >= 1:
+        target = int(target)
+
+    value = Decimal(str(value))
+    target = Decimal(str(target))
+    result = value.quantize(target, rounding=ROUND_DOWN)
+
+    return result

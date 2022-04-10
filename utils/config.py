@@ -25,17 +25,17 @@ class Config:
 
     def __init__(self):
 
-        self.platform: str = "binance_spot"  # 交易的平台
+        self.platform: str = "binance_spot"  # trading platform 'binance_spot', or 'binance_future'
         self.api_key: str = None
         self.api_secret: str = None
-        self.max_pairs = 4
-        self.pump_pct = 0.026  # the price need to go up over  2.6% in 1 hour， then you may consider to enter a position
-        self.pump_pct_4h = 0.045  # the price need to go up over  2.6% in 4 hour， then you may consider to enter a position
-        self.initial_trade_value = 500
+        self.max_pairs = 10
+        self.pump_pct = 0.02  # the price need to go up over  2% in 1 hour， then you may consider to enter a position
+        self.pump_pct_4h = 0.04  # the price need to go up over  4% in 4 hour， then you may consider to enter a position
+        self.initial_trade_value = 100
         self.trade_value_multiplier = 1.3
         self.increase_pos_when_drop_down = 0.05
         self.exit_profit_pct = 0.01  # profit percent
-        self.profit_pull_back_pct = 0.01  # pull back percent.
+        self.profit_drawdown_pct = 0.01  # draw down pct
         self.trading_fee = 0.0004  #
         self.max_increase_pos_count = 5
         self.proxy_host = ""  # proxy host
@@ -62,6 +62,7 @@ class Config:
             if not configures:
                 print("config json file error!")
                 exit(0)
+
         self._update(configures)
 
     def _update(self, update_fields):
@@ -73,7 +74,20 @@ class Config:
         """
 
         for k, v in update_fields.items():
-            setattr(self, k, v)
+
+            if k == 'blocked_lists' or k == 'allowed_lists':
+                new_values = []
+
+                if not isinstance(v, list):
+                    print("config value error")
+                    exit(0)
+
+                for old_value in v:
+                    new_values.append(old_value.upper())
+                setattr(self, k, new_values)
+
+            else:
+                setattr(self, k, v)
 
 
 config = Config()

@@ -25,6 +25,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(level=logging.INFO, format=format, filename='log.txt')
 logging.getLogger("apscheduler.scheduler").setLevel(logging.WARNING)
+logging.getLogger("apscheduler.executors.default").setLevel(logging.WARNING)
+
 logger = logging.getLogger('binance')
 from typing import Union
 from gateway.binance_future import Interval
@@ -44,8 +46,16 @@ def get_data(trader: Union[BinanceFutureTrader, BinanceSpotTrader]):
     signals = []
 
     # we calculate the signal here.
+    if len(config.allowed_lists) > 0:
+        symbols = config.allowed_lists
+
     for symbol in symbols:
-        klines = trader.get_klines(symbol=symbol, interval=Interval.HOUR_1, limit=100)
+
+        if len(config.blocked_lists) > 0:
+            if symbol.upper() in config.blocked_lists:
+                continue
+
+        klines = trader.get_klines(symbol=symbol.upper(), interval=Interval.HOUR_1, limit=100)
         if len(klines) > 0:
             df = pd.DataFrame(klines, dtype=np.float64,
                               columns=['open_time', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'turnover', 'a2',
@@ -93,7 +103,9 @@ if __name__ == '__main__':
     config.loads('./config.json')
     print(config.blocked_lists)
 
-    if config.platform == 'binance_spot':  # binance_spot
+    if config.platform == 'binance_spot':
+        # if you want to trade spot, set the platform to 'binance_spot',  else will trade Binance Future(USDT Base)
+        # 如果你交易的是币安现货，就设置config.platform 为 'binance_spot'，否则就交易的是币安永续合约(USDT)
         trader = BinanceSpotTrader()
     else:
         trader = BinanceFutureTrader()
@@ -111,7 +123,7 @@ if __name__ == '__main__':
         trader.start()
 
 """
-strategy idea: 
+策略逻辑: 
 
 1. 每1个小时会挑选出前几个波动率最大的交易对(假设交易的是四个交易对).
 2. 然后根据设置的参数进行下单(假设有两个仓位,那么波动率最大的两个，且他们过去一段时间是暴涨过的)

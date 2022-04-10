@@ -43,7 +43,7 @@
 
 8. exit_profit_pct: exit your position when you get profit.
 
-9. profit_pull_back_pct: pull back
+9. profit_drawdown_pct: drawdown percent.
 
 10. trading_fee: trading fee rate.
  
@@ -89,7 +89,7 @@ Wechat: bitquant51
   "trade_value_multiplier": 1.3,
   "increase_pos_when_drop_down": 0.05,
   "exit_profit_pct": 0.01,
-  "profit_pull_back_pct": 0.01,
+  "profit_drawdown_pct": 0.01,
   "trading_fee": 0.0004,
   "max_increase_pos_count": 5,
   "proxy_host": "",
@@ -111,7 +111,7 @@ Wechat: bitquant51
 
 8. exit_profit_pct: 出场点位
 
-9. profit_pull_back_pct: 最高值回调多少后，且有利润的时候才出场.
+9. profit_drawdown_pct: 最高值回调多少后，且有利润的时候才出场.
 
 10. trading_fee: 交易的资金费率。
  

@@ -17,7 +17,7 @@
 
 from gateway import BinanceSpotHttp, OrderStatus, OrderType, OrderSide
 from utils import config
-from utils import round_to
+from utils import round_to, floor_to
 import logging
 from datetime import datetime
 from utils.config import signal_data
@@ -26,7 +26,7 @@ from utils.positions import Positions
 
 class BinanceSpotTrader(object):
     """
-        免责声明:
+        Disclaimer 免责声明:
         the binance spot trader, 币安现货马丁格尔策略.
         the Martingle strategy in Crypto Market will endure a lot of risk， use it before you understand the risk and martingle strategy, and the code may have bugs,
         Use it at your own risk. We won't ensure you will earn money from this code.
@@ -59,6 +59,7 @@ class BinanceSpotTrader(object):
 
                 symbol = item['symbol']
                 if symbol.__contains__('UP') or symbol.__contains__('DOWN'):
+                    # won't trade the UP and DOWN token.
                     continue
 
                 if item.get('quoteAsset') == 'USDT' and item.get('status') == "TRADING":
@@ -226,6 +227,7 @@ class BinanceSpotTrader(object):
             ask_price = self.tickers_dict.get(s, {}).get('ask_price', 0)  # ask price
 
             min_qty = self.symbols_dict.get(s, {}).get('min_qty')
+            min_price = self.symbols_dict.get(s, {}).get("min_price")
 
             if bid_price > 0 and ask_price > 0:
                 value = pos * bid_price
@@ -236,19 +238,19 @@ class BinanceSpotTrader(object):
                 else:
                     avg_price = pos_data.get('avg_price')
                     self.positions.update_profit_max_price(s, bid_price)
-                    # 计算利润.
+                    # calculate profit 计算利润.
                     profit_pct = bid_price / avg_price - 1
-                    pull_back_pct = self.positions.positions.get(s, {}).get('profit_max_price', 0) / bid_price - 1
+                    drawdown_pct = self.positions.positions.get(s, {}).get('profit_max_price', 0) / bid_price - 1
 
                     dump_pct = self.positions.positions.get(s, {}).get('last_entry_price', 0) / bid_price - 1
                     current_increase_pos_count = self.positions.positions.get(s, {}).get('current_increase_pos_count',
                                                                                          1)
 
                     # there is profit here, consider whether exit this position.
-                    if profit_pct >= config.exit_profit_pct and pull_back_pct >= config.profit_pull_back_pct and len(
+                    if profit_pct >= config.exit_profit_pct and drawdown_pct >= config.profit_drawdown_pct and len(
                             self.sell_orders_dict.get(s, [])) <= 0:
                         """
-                        the position has the profit and pull back meet requirements.
+                        the position is profitable and drawdown meets requirements.
                         """
 
                         # cancel the buy orders. when we want to place sell orders, we need to cancel the buy orders.
@@ -258,11 +260,13 @@ class BinanceSpotTrader(object):
                                 "cancel the buy orders. when we want to place sell orders, we need to cancel the buy orders.")
                             self.http_client.cancel_order(s, buy_order.get('clientOrderId'))
                         # the price tick and quantity precision.
-                        qty = round_to(abs(pos), min_qty)
+
+                        qty = floor_to(abs(pos), min_qty)
+                        price = round_to(bid_price, min_price)
 
                         sell_order = self.http_client.place_order(symbol=s, order_side=OrderSide.SELL,
                                                                   order_type=OrderType.LIMIT, quantity=qty,
-                                                                  price=bid_price)
+                                                                  price=price)
 
                         if sell_order:
                             # resolve sell order
@@ -284,11 +288,12 @@ class BinanceSpotTrader(object):
 
                         buy_value = config.initial_trade_value * config.trade_value_multiplier ** current_increase_pos_count
 
-                        qty = round_to(buy_value / bid_price, min_qty)
+                        qty = floor_to(buy_value / ask_price, min_qty)
+                        price = round_to(ask_price, min_price)
 
                         buy_order = self.http_client.place_order(symbol=s, order_side=OrderSide.BUY,
                                                                  order_type=OrderType.LIMIT, quantity=qty,
-                                                                 price=bid_price)
+                                                                 price=price)
                         if buy_order:
                             # resolve buy orders
                             orders = self.buy_orders_dict.get(s, [])
@@ -337,17 +342,20 @@ class BinanceSpotTrader(object):
     def place_order(self, symbol: str, hour_change: float, four_hour_change: float):
 
         buy_value = config.initial_trade_value
+
+        min_price = self.symbols_dict.get(symbol, {}).get("min_price")
         min_qty = self.symbols_dict.get(symbol, {}).get('min_qty')
-        bid_price = self.tickers_dict.get(symbol, {}).get('bid_price', 0)  # bid price
-        if bid_price <= 0:
-            print(f"error -> spot {symbol} bid_price is :{bid_price}")
+        ask_price = self.tickers_dict.get(symbol, {}).get('ask_price', 0)  # ask price
+        if ask_price <= 0:
+            logging.error(f"error -> spot {symbol} ask_price is :{ask_price}")
             return
 
-        qty = round_to(buy_value / bid_price, min_qty)
+        price = round_to(ask_price, min_price)
+        qty = floor_to(buy_value / ask_price, min_qty)
 
         buy_order = self.http_client.place_order(symbol=symbol, order_side=OrderSide.BUY,
                                                  order_type=OrderType.LIMIT, quantity=qty,
-                                                 price=bid_price)
+                                                 price=price)
 
         print(
             f"{symbol} hour change: {hour_change}, 4hour change: {four_hour_change}, place buy order: {buy_order}")
