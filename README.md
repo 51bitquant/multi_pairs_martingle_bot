@@ -15,7 +15,7 @@
   "trade_value_multiplier": 1.5,
   "increase_pos_when_drop_down": 0.05,
   "exit_profit_pct": 0.01,
-  "profit_pull_back_pct": 0.01,
+  "profit_drawdown_pct": 0.01,
   "trading_fee": 0.0004,
   "max_increase_pos_count": 5,
   "turnover_threshold": 100000,
