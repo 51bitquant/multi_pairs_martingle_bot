@@ -20,5 +20,6 @@
   ],
   "allowed_lists": [],
   "proxy_host": "",
-  "proxy_port": 0
+  "proxy_port": 0,
+  "taker_price_pct": 0.005
 }

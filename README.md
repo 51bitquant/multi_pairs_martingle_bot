@@ -25,7 +25,8 @@
   "blocked_lists": [],
   "allowed_lists": [],
   "proxy_host": "",
-  "proxy_port": 0
+  "proxy_port": 0,
+  "taker_price_pct": 0.005
 }
 
 ```
@@ -75,6 +76,8 @@
 
 19. proxy_port: 代理主机的端口号如: 8888, 9999 ect.
 
+20. taker_price_pct: 当前盘口吃价比例，类似市价单效果
+
 
 ### 如何使用
 1. 把代码下载下来，然后编辑config.json文件，它会读取你这个配置文件，记得填写你的交易所的api
@@ -114,7 +117,8 @@
   ],
   "allowed_lists": [],
   "proxy_host": "",
-  "proxy_port": 0
+  "proxy_port": 0,
+  "taker_price_pct": 0.005
 }
 
 
@@ -167,6 +171,8 @@ will exit your position(also need to meet the requirement of the exit_profit_pct
 18. proxy_host: proxy host ip location like '132.148.123.22'
 
 19. proxy_port: proxy port like : 8888, 9999 ect.
+
+20. taker_price_pct: the taker price
 
 ### how-to use
 1. just config your config.json file, past your api key and secret from

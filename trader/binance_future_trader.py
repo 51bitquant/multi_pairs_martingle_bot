@@ -252,7 +252,8 @@ class BinanceFutureTrader(object):
                                 "cancel the buy orders and send the profit order.")
                             self.http_client.cancel_order(s, buy_order.get('clientOrderId'))
                         # price tick and quantity precision
-                        price = round_to(bid_price, min_price)
+                        price = ask_price * (1 - config.taker_price_pct)
+                        price = round_to(price, min_price)
                         qty = floor_to(abs(pos), min_qty)
 
                         sell_order = self.http_client.place_order(symbol=s, order_side=OrderSide.SELL,
@@ -273,7 +274,8 @@ class BinanceFutureTrader(object):
                                 "cancel the buy orders and send the stop loss order.")
                             self.http_client.cancel_order(s, buy_order.get('clientOrderId'))
                         # price tick and quantity precision
-                        price = round_to(bid_price, min_price)
+                        price = ask_price * (1-config.taker_price_pct)
+                        price = round_to(price, min_price)
                         qty = floor_to(abs(pos), min_qty)
 
                         sell_order = self.http_client.place_order(symbol=s, order_side=OrderSide.SELL,
@@ -300,8 +302,9 @@ class BinanceFutureTrader(object):
 
                         buy_value = config.initial_trade_value * config.trade_value_multiplier ** current_increase_pos_count
 
-                        price = round_to(ask_price, min_price)
-                        qty = floor_to(buy_value / ask_price, min_qty)
+                        price = bid_price * (1 + config.taker_price_pct)
+                        price = round_to(price, min_price)
+                        qty = floor_to(buy_value / price, min_qty)
 
                         buy_order = self.http_client.place_order(symbol=s, order_side=OrderSide.BUY,
                                                                  order_type=OrderType.LIMIT, quantity=qty,
@@ -364,13 +367,15 @@ class BinanceFutureTrader(object):
         min_price = self.symbols_dict.get(symbol, {}).get('min_price')
         min_qty = self.symbols_dict.get(symbol, {}).get('min_qty')
 
-        ask_price = self.tickers_dict.get(symbol, {}).get('ask_price', 0)  # bid price
-        if ask_price <= 0:
-            logging.error(f"error -> future {symbol} ask_price is :{ask_price}")
+        bid_price = self.tickers_dict.get(symbol, {}).get('bid_price', 0)  # bid price
+        if bid_price <= 0:
+            logging.error(f"error -> future {symbol} bid_price is :{bid_price}")
             return
 
-        price = round_to(ask_price, min_price)
-        qty = floor_to(buy_value / ask_price, min_qty)
+        price = bid_price * (1 + config.taker_price_pct)
+        price = round_to(price, min_price)
+
+        qty = floor_to(buy_value / price, min_qty)
 
         buy_order = self.http_client.place_order(symbol=symbol, order_side=OrderSide.BUY,
                                                  order_type=OrderType.LIMIT, quantity=qty,
