@@ -6,6 +6,7 @@
   "pump_pct": 0.026,
   "pump_pct_4h": 0.045,
   "initial_trade_value": 200,
+  "stop_loss_pct": 0,
   "trade_value_multiplier": 1.5,
   "increase_pos_when_drop_down": 0.05,
   "exit_profit_pct": 0.01,
