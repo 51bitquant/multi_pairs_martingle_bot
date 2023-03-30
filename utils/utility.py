@@ -93,23 +93,15 @@ def round_to(value: float, target: float) -> Decimal:
     """
     Round price to price tick value.
     """
-    if target >= 1:
-        target = int(target)
-
     value = Decimal(str(value))
-    target = Decimal(str(target))
-    rounded = value.quantize(target)
-    return rounded
+    target = Decimal(str(target).rstrip("0"))
+    return value.quantize(target)
+
 
 def floor_to(value: float, target: float) -> Decimal:
     """
     Similar to math.floor function, but to target float number.
     """
-    if target >= 1:
-        target = int(target)
-
     value = Decimal(str(value))
-    target = Decimal(str(target))
-    result = value.quantize(target, rounding=ROUND_DOWN)
-
-    return result
+    target = Decimal(str(target).rstrip("0"))
+    return value.quantize(target, rounding=ROUND_DOWN)
