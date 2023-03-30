@@ -314,7 +314,7 @@ class BinanceSpotTrader(object):
 
                         price = bid_price * (1 + config.taker_price_pct)
                         price = round_to(price, min_price)
-                        qty = floor_to(buy_value / price, min_qty)
+                        qty = round_to(buy_value / price, min_qty)
 
                         buy_order = self.http_client.place_order(symbol=s, order_side=OrderSide.BUY,
                                                                  order_type=OrderType.LIMIT, quantity=qty,
