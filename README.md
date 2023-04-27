@@ -53,6 +53,15 @@
    如果需要购买服务器，这里推荐ucloud, 新用户优惠比较大，链接如下:
    [https://passport.ucloud.cn/?invitation_code=C1x2EA81CD79B8C](https://passport.ucloud.cn/?invitation_code=C1x2EA81CD79B8C)
 
+## 注意事项
+
+Note: 
+如果你运行的是现货策略，记得买点BNB，并设置使用BNB作为抵扣手续费，不然现货卖出的时候会出现Insufficient
+Balance的错误。
+
+if you run on spot market, remember to buy some BNB as fee token or you
+will encounter "Insufficient Balance" error.
+
 ###配置文件参数说明
 
 ```
