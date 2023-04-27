@@ -1,5 +1,5 @@
-requests==2.22.0
-apscheduler==3.6.1
+requests==2.29.0
+apscheduler==3.10.1
 pandas
 numpy
 

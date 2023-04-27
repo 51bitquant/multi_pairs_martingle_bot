@@ -82,7 +82,7 @@ class Config:
                 new_values = []
 
                 if not isinstance(v, list):
-                    print("config value error")
+                    print("config values error")
                     exit(0)
 
                 for old_value in v:

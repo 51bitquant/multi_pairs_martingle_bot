@@ -129,4 +129,13 @@ if __name__ == '__main__':
 2. 然后根据设置的参数进行下单(假设有两个仓位,那么波动率最大的两个，且他们过去一段时间是暴涨过的)
 3. 然后让他们执行马丁策略.
 
+
+Martingle trading strategy: 
+
+1. select the top trading pairs with the highest volatility every hour (assuming four trading pairs are traded, you can config in the config.json file)
+
+2. Then place an order based on the setting parameters
+
+3. Then have them execute the Martin strategy
+
 """
