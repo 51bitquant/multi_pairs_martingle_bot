@@ -3,6 +3,56 @@
 
 币安多交易对强势币马丁格尔策略。支持币安现货或者合约，目前只支持做多的马丁策略。
 
+# 如何使用
+
+1. 安装python解析器，这里推荐安装anaconda， 通过anaconda
+   可以方便创建python解析器
+   
+2. 创建python解析器，这里以创建python
+   3.9版本解析器为例子，解析器的名称为mytrader, 终端命令行中输入以下命令:
+    
+   > conda create -n mytrader python==3.9
+
+3. 激活你的python trader解析器：
+
+   > conda activate mytrader
+
+4. 把下载下来，进行解压, 并在终端中切换到该代码所在的目录，
+   你可能需要cd到这个代码所在的目录
+   
+5. 安装项目依赖的库，执行如下命令：
+
+   >  pip install -r requirements.txt
+   
+   需要说明的是requirements.txt文件是在代码中，你可以打开看看里面依赖的库，当然你也可以手动安装各个依赖库，分别执行如下命令：
+   
+   > pip install requests==2.29.0 
+   
+   > pip install apscheduler==3.10.1 
+   
+   > pip install pandas
+    
+   > pip install numpy
+
+    当然你可以安装不指定python版本的库，但是如果有一些库接口更改的话，可能会有问题。
+
+6. 修改配置文config.json,
+   如果没有找到该文件可以复制config-example.json文件，然后它名字改为config.json。具体的配置参数可以看下面文档的说明。
+
+7. 运行代码： 如果是在本地电脑可以直接在终端输入：python main.py,
+   或者在pycharm中直接运行，但是记得为代码配置为刚才创建的python解析器。具体的配置可以参考[网易云课堂的视频](https://study.163.com/course/courseMain.htm?courseId=1209509824&share=2&shareId=480000001919830)
+   
+8. 服务器运行
+   
+   在服务器端运行，如果是在linux服务器，可以用守护进程的方式运行：
+    
+   > nohup python -u main.py > nohup_log.out 2>&1 &
+   
+   当然你可以通过shell命令来执行代码中的start.sh 文件。
+   
+   如果需要购买服务器，这里推荐ucloud, 新用户优惠比较大，链接如下:
+   [https://passport.ucloud.cn/?invitation_code=C1x2EA81CD79B8C](https://passport.ucloud.cn/?invitation_code=C1x2EA81CD79B8C)
+
 ###配置文件参数说明
 
 ```
