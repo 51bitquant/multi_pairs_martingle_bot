@@ -3,6 +3,9 @@
 
 币安多交易对强势币马丁格尔策略。支持币安现货或者合约，目前只支持做多的马丁策略。
 
+Note: 使用前请测试下代码，不保证代码没有任何bugs。DO you own research before
+using the codes. We don't guarantee any profits from the codes.
+
 # 如何使用
 
 1. 安装python解析器，这里推荐安装anaconda， 通过anaconda
