@@ -214,7 +214,7 @@ class BinanceFutureHttp(object):
         return []
 
     def get_latest_price(self, symbol):
-        path = "/fapi/v1/ticker/price"
+        path = "/fapi/v2/ticker/price"
         query_dict = {"symbol": symbol}
         return self.request(RequestMethod.GET, path, query_dict)
 
@@ -343,10 +343,20 @@ class BinanceFutureHttp(object):
 
     def get_balance(self):
         """
-        [{'accountId': 18396, 'asset': 'USDT', 'balance': '530.21334791', 'withdrawAvailable': '530.21334791', 'updateTime': 1570330854015}]
+        [{
+        "accountAlias": "SgsR",    // 账户唯一识别码
+        "asset": "USDT",        // 资产
+        "balance": "122607.35137903",   // 总余额
+        "crossWalletBalance": "23.72469206", // 全仓余额
+        "crossUnPnl": "0.00000000"  // 全仓持仓未实现盈亏
+        "availableBalance": "23.72469206",       // 下单可用余额
+        "maxWithdrawAmount": "23.72469206",     // 最大可转出余额
+        "marginAvailable": true,    // 是否可用作联合保证金
+        "updateTime": 1617939110373
+        }]
         :return:
         """
-        path = "/fapi/v1/balance"
+        path = "/fapi/v2/balance"
         params = {"timestamp": self._timestamp()}
 
         return self.request(RequestMethod.GET, path=path, requery_dict=params, verify=True)
@@ -371,6 +381,6 @@ class BinanceFutureHttp(object):
         [{'symbol': 'BTCUSDT', 'positionAmt': '0.000', 'entryPrice': '0.00000', 'markPrice': '8326.40833498', 'unRealizedProfit': '0.00000000', 'liquidationPrice': '0'}]
         :return:
         """
-        path = "/fapi/v1/positionRisk"
+        path = "/fapi/v2/positionRisk"
         params = {"timestamp": self._timestamp()}
         return self.request(RequestMethod.GET, path, params, verify=True)

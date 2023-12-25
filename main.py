@@ -78,7 +78,7 @@ def get_data(trader: Union[BinanceFutureTrader, BinanceSpotTrader]):
             pct = df['close'] / df['open'] - 1
             pct_4h = df_4hour['close']/df_4hour['open'] - 1
 
-            value = {'pct': pct[-1], 'pct_4h':pct_4h[-1] , 'symbol': symbol, 'hour_turnover': df['turnover'][-1]}
+            value = {'pct': pct.iloc[-1], 'pct_4h':pct_4h.iloc[-1] , 'symbol': symbol, 'hour_turnover': df['turnover'].iloc[-1]}
 
 
             # calculate your signal here.
