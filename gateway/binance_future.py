@@ -125,7 +125,7 @@ class BinanceFutureHttp(object):
                 if response.status_code == 200:
                     return response.json()
                 else:
-                    print(f"请求没有成功: {response.status_code}, 继续尝试请求")
+                    print(f"请求没有成功, code: {response.status_code}, text: {response.text} 继续尝试请求")
             except Exception as error:
                 print(f"请求:{path}, 发生了错误: {error}, 时间: {datetime.now()}")
                 time.sleep(3)

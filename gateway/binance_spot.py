@@ -120,7 +120,7 @@ class BinanceSpotHttp(object):
                 if response.status_code == 200:
                     return response.json()
                 else:
-                    print(response.json(), response.status_code)
+                    print(f"请求没有成功, code: {response.status_code}, text: {response.text} 继续尝试请求")
             except Exception as error:
                 print(f"请求:{path}, 发生了错误: {error}")
                 time.sleep(3)
